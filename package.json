@@ -1,0 +1,13 @@
+{
+  "name": "ee",
+  "version": "0.0.1",
+  "description": "",
+  "main": "watch.js",
+  "author": "magnus kulke",
+  "license": "ISC",
+  "devDependencies": {
+    "browser-sync": "^2.11.0",
+    "chokidar": "^1.4.2",
+    "connect-history-api-fallback": "^1.1.0"
+  }
+}
