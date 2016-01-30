@@ -13,6 +13,7 @@ import Html
 
 -- MAIN
 
+
 app : StartApp.App Model
 app = start
   { init = init
@@ -31,21 +32,6 @@ port tasks =
   app.tasks
 
 
--- ACTION
-
-
-type Action = NewTick Int
-
-
--- UPDATE
-
-
-update : Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
-    NewTick tick -> (tick, Effects.none)
-
-
 -- EFFECTS
 
 
@@ -56,14 +42,6 @@ getTick =
 
 
 -- MODEL
-
-
-type alias Model = Int
-
-
-init : (Model, Effects Action)
-init =
-  (0, getTick)
 
 
 type Orientation
@@ -83,6 +61,14 @@ type alias Tile =
   { kind : Kind
   , orientation : Orientation
   }
+
+
+type alias Model = List Tile
+
+
+init : (Model, Effects Action)
+init =
+  ([], getTick)
 
 
 tileGenerator : Random.Generator Tile
@@ -124,6 +110,21 @@ tile pair =
     Tile kind orientation
 
 
+-- ACTION
+
+
+type Action = NewTick Int
+
+
+-- UPDATE
+
+
+update : Action -> Model -> (Model, Effects Action)
+update action model =
+  case action of
+    NewTick tick -> (generateListOfTiles 4 tick, Effects.none)
+
+
 -- VIEW
 
 
@@ -138,10 +139,11 @@ view address model =
       , ( offset,  offset)
       , ( offset, -offset)
       ]
-    tiles = generateListOfTiles 4 model
+    align tuple = move (fst tuple) (snd tuple)
+    tiles = model
       |> List.map tileView
       |> List.map2 (,) positions
-      |> List.map (\tuple -> move (fst tuple) (snd tuple))
+      |> List.map align
   in
     collage
       boardSize
