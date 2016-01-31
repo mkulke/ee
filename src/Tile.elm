@@ -71,7 +71,12 @@ type Action
 
 
 update : Action -> Model -> Model
-update action model = model
+update action model =
+  case model.orientation of
+    North -> {model | orientation = East}
+    East -> {model | orientation = South}
+    South -> {model | orientation = West}
+    West -> {model | orientation = North}
 
 
 -- VIEW
@@ -79,6 +84,15 @@ update action model = model
 
 size : Int
 size = 50
+
+
+rotation : Model -> Float
+rotation { orientation } =
+  case orientation of
+    North -> 0
+    East -> 90
+    South -> 180
+    West -> 270
 
 
 view : Address Action -> Model -> Form
@@ -89,17 +103,11 @@ view address model =
         Left -> "/img/left.png"
         Right -> "/img/right.png"
         Straight -> "/img/straight.png"
-    rotation { orientation } =
-      case orientation of
-        North -> 0
-        East -> 90
-        South -> 180
-        West -> 270
     tileRotate =
       rotate (rotation model |> degrees)
   in
     path model
       |> image size size
-      -- |> Graphics.Input.clickable address Rotate
+      |> Graphics.Input.clickable (Signal.message address Rotate)
       |> toForm
       |> tileRotate

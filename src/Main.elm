@@ -2,8 +2,6 @@ module Main (..) where
 
 import Tile
 import Graphics.Collage exposing (..)
-import Graphics.Element exposing (..)
-import Graphics.Input   exposing (..)
 import Random
 import StartApp         exposing (start)
 import Task
@@ -80,8 +78,8 @@ type Action
 -- UPDATE
 
 
-woFx : Model -> (Model, Effects Action)
-woFx model = (model, Effects.none)
+noFx : Model -> (Model, Effects Action)
+noFx model = (model, Effects.none)
 
 
 update : Action -> Model -> (Model, Effects Action)
@@ -94,7 +92,7 @@ update action model =
             then (tileID, Tile.update tileAction tileModel)
             else (tileID, tileModel)
       in
-        List.map updateTile model |> woFx
+        List.map updateTile model |> noFx
 
 
 -- VIEW
