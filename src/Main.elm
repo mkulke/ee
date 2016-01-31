@@ -1,7 +1,9 @@
 module Main (..) where
 
+import Tile
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
+import Graphics.Input   exposing (..)
 import Random
 import StartApp         exposing (start)
 import Task
@@ -44,26 +46,29 @@ getTick =
 -- MODEL
 
 
-type Orientation
-  = North
-  | East
-  | South
-  | West
+-- type Orientation
+--   = North
+--   | East
+--   | South
+--   | West
 
 
-type Kind
-  = Left
-  | Right
-  | Straight
+-- type Kind
+--   = Left
+--   | Right
+--   | Straight
 
 
-type alias Tile =
-  { kind : Kind
-  , orientation : Orientation
-  }
+-- type alias Tile =
+--   { kind : Kind
+--   , orientation : Orientation
+--   }
 
 
-type alias Model = List Tile
+type alias Model = List (ID, Tile.Model)
+
+
+type alias ID = Int
 
 
 init : (Model, Effects Action)
@@ -71,113 +76,104 @@ init =
   ([], getTick)
 
 
-tileGenerator : Random.Generator Tile
-tileGenerator =
-  Random.pair (Random.int 0 3) (Random.int 0 3)
-    |> Random.map tile
+-- tileGenerator : Random.Generator Tile
+-- tileGenerator =
+--   Random.pair (Random.int 0 3) (Random.int 0 3)
+--     |> Random.map tile
 
 
-listOfTilesGenerator : Int -> Random.Generator (List Tile)
-listOfTilesGenerator count =
-  Random.list count tileGenerator
+tilesGenerator : Int -> Random.Generator (List Tile.Model)
+tilesGenerator count =
+  Random.list count Tile.generator
 
 
-generateListOfTiles : Int -> Int -> (List Tile)
-generateListOfTiles count seed =
-  Random.generate (listOfTilesGenerator count) (Random.initialSeed seed)
+generateTiles : Int -> Int -> Model
+generateTiles count seed =
+  Random.generate (tilesGenerator count) (Random.initialSeed seed)
     |> fst
+    |> List.indexedMap (,)
 
 
-tile : (Int, Int) -> Tile
-tile pair =
-  let
-    kindNo =
-      fst pair
-    kind =
-      case kindNo of
-        0 -> Left
-        1 -> Right
-        _ -> Straight
-    orientationNo =
-      snd pair
-    orientation =
-      case orientationNo of
-        0 -> North
-        1 -> East
-        2 -> South
-        _ -> West
-  in
-    Tile kind orientation
+-- tile : (Int, Int) -> Tile
+-- tile pair =
+--   let
+--     kindNo =
+--       fst pair
+--     kind =
+--       case kindNo of
+--         0 -> Left
+--         1 -> Right
+--         _ -> Straight
+--     orientationNo =
+--       snd pair
+--     orientation =
+--       case orientationNo of
+--         0 -> North
+--         1 -> East
+--         2 -> South
+--         _ -> West
+--   in
+--     Tile kind orientation
 
 
 -- ACTION
 
 
-type Action = NewTick Int
+type Action
+  = NewTick Int
+  | Tile ID Tile.Action
 
 
 -- UPDATE
 
 
+woFx : Model -> (Model, Effects Action)
+woFx model = (model, Effects.none)
+
+
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    NewTick tick -> (generateListOfTiles 4 tick, Effects.none)
+    NewTick tick -> (generateTiles 4 tick, Effects.none)
+    Tile id tileAction ->
+      let updateTile (tileID, tileModel) =
+            if tileID == id
+            then (tileID, Tile.update tileAction tileModel)
+            else (tileID, tileModel)
+      in
+        List.map updateTile model |> woFx
 
 
 -- VIEW
 
 
+size : Int
+size = Tile.size * 2
+
+
 view : Address Action -> Model -> Html.Html
 view address model =
-  let
-    offset =
-      (toFloat tileSize) / 2
-    positions =
-      [ (-offset,  offset)
-      , (-offset, -offset)
-      , ( offset,  offset)
-      , ( offset, -offset)
-      ]
-    align tuple = move (fst tuple) (snd tuple)
-    tiles = model
-      |> List.map tileView
-      |> List.map2 (,) positions
-      |> List.map align
+  let offset =
+        (toFloat Tile.size) / 2
+      positions =
+        [ (-offset,  offset)
+        , (-offset, -offset)
+        , ( offset,  offset)
+        , ( offset, -offset)
+        ]
+      align tuple = move (fst tuple) (snd tuple)
+      tiles = model
+        |> List.map (viewTile address)
+        |> List.map2 (,) positions
+        |> List.map align
   in
-    collage
-      boardSize
-      boardSize
-      tiles
-    |> Html.fromElement
+    collage size size tiles
+      |> Html.fromElement
 
 
-tileSize : Int
-tileSize = 50
-
-
-boardSize : Int
-boardSize = tileSize * 2
-
-
-tileView : Tile -> Form
-tileView tile =
-  let
-    path { kind } =
-      case kind of
-        Left -> "/img/left.png"
-        Right -> "/img/right.png"
-        Straight -> "/img/straight.png"
-    rotation { orientation } =
-      case orientation of
-        North -> 0
-        East -> 90
-        South -> 180
-        West -> 270
-    tileRotate =
-      rotate (rotation tile |> degrees)
+viewTile : Address Action -> (ID, Tile.Model) -> Form
+viewTile address tuple =
+  let id = fst tuple
+      tile = snd tuple
   in
-    path tile
-      |> image tileSize tileSize
-      |> toForm
-      |> tileRotate
+    Tile.view (Signal.forwardTo address (Tile id)) tile
