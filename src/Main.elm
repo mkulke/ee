@@ -99,7 +99,7 @@ update action model =
 
 
 size : Int
-size = Tile.size * 2
+size = 2
 
 
 addOffset : (Float, Float) -> (Float, Float)
@@ -111,20 +111,18 @@ addOffset tuple =
 
 view : Address Action -> Model -> Html.Html
 view address model =
-  let positions = List.map addOffset
-        [ (0,  0)
-        , ((toFloat Tile.size), 0)
-        , (0, (toFloat Tile.size))
-        , ((toFloat Tile.size), (toFloat Tile.size))
-        ]
-      x = Debug.log "pos" positions
+  let whack y = List.indexedMap (\i t -> (i * Tile.size, y)) [1..size]
+      whock = List.indexedMap (\i t -> whack (i * Tile.size)) [1..size]
+      whick = Debug.log "whick" (List.concat whock)
+      whuck = List.map (\x -> (toFloat (fst x), toFloat (snd x))) whick
+      positions = List.map addOffset whuck
       align tuple = move (fst tuple) (snd tuple)
       tiles = model
         |> List.map (viewTile address)
         |> List.map2 (,) positions
         |> List.map align
   in
-    collage size size tiles
+    collage (Tile.size * size) (Tile.size * size) tiles
       |> Html.fromElement
 
 
