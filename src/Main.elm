@@ -8,7 +8,7 @@ import Task
 import Effects          exposing (Effects, Never)
 import Signal           exposing (Address)
 import Html
--- import Debug
+import Debug
 
 
 -- MAIN
@@ -102,16 +102,22 @@ size : Int
 size = Tile.size * 2
 
 
+addOffset : (Float, Float) -> (Float, Float)
+addOffset tuple =
+  let half = (toFloat Tile.size) / 2
+  in
+    ((fst tuple) - half, (snd tuple) - half)
+
+
 view : Address Action -> Model -> Html.Html
 view address model =
-  let offset =
-        (toFloat Tile.size) / 2
-      positions =
-        [ (-offset,  offset)
-        , (-offset, -offset)
-        , ( offset,  offset)
-        , ( offset, -offset)
+  let positions = List.map addOffset
+        [ (0,  0)
+        , ((toFloat Tile.size), 0)
+        , (0, (toFloat Tile.size))
+        , ((toFloat Tile.size), (toFloat Tile.size))
         ]
+      x = Debug.log "pos" positions
       align tuple = move (fst tuple) (snd tuple)
       tiles = model
         |> List.map (viewTile address)
