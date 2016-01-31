@@ -46,25 +46,6 @@ getTick =
 -- MODEL
 
 
--- type Orientation
---   = North
---   | East
---   | South
---   | West
-
-
--- type Kind
---   = Left
---   | Right
---   | Straight
-
-
--- type alias Tile =
---   { kind : Kind
---   , orientation : Orientation
---   }
-
-
 type alias Model = List (ID, Tile.Model)
 
 
@@ -74,12 +55,6 @@ type alias ID = Int
 init : (Model, Effects Action)
 init =
   ([], getTick)
-
-
--- tileGenerator : Random.Generator Tile
--- tileGenerator =
---   Random.pair (Random.int 0 3) (Random.int 0 3)
---     |> Random.map tile
 
 
 tilesGenerator : Int -> Random.Generator (List Tile.Model)
@@ -92,28 +67,6 @@ generateTiles count seed =
   Random.generate (tilesGenerator count) (Random.initialSeed seed)
     |> fst
     |> List.indexedMap (,)
-
-
--- tile : (Int, Int) -> Tile
--- tile pair =
---   let
---     kindNo =
---       fst pair
---     kind =
---       case kindNo of
---         0 -> Left
---         1 -> Right
---         _ -> Straight
---     orientationNo =
---       snd pair
---     orientation =
---       case orientationNo of
---         0 -> North
---         1 -> East
---         2 -> South
---         _ -> West
---   in
---     Tile kind orientation
 
 
 -- ACTION
