@@ -67,6 +67,10 @@ generateTiles count seed =
     |> List.indexedMap (,)
 
 
+size : Int
+size = 10
+
+
 -- ACTION
 
 
@@ -85,7 +89,7 @@ noFx model = (model, Effects.none)
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    NewTick tick -> (generateTiles 4 tick, Effects.none)
+    NewTick tick -> (generateTiles (size * size) tick, Effects.none)
     Tile id tileAction ->
       let updateTile (tileID, tileModel) =
             if tileID == id
@@ -98,24 +102,23 @@ update action model =
 -- VIEW
 
 
-size : Int
-size = 2
-
-
 addOffset : (Float, Float) -> (Float, Float)
 addOffset tuple =
-  let half = (toFloat Tile.size) / 2
+  let half = (toFloat (size - 1) / 2) * (toFloat Tile.size)
   in
     ((fst tuple) - half, (snd tuple) - half)
 
 
 view : Address Action -> Model -> Html.Html
 view address model =
-  let whack y = List.indexedMap (\i t -> (i * Tile.size, y)) [1..size]
-      whock = List.indexedMap (\i t -> whack (i * Tile.size)) [1..size]
-      whick = Debug.log "whick" (List.concat whock)
-      whuck = List.map (\x -> (toFloat (fst x), toFloat (snd x))) whick
-      positions = List.map addOffset whuck
+  let zip index = List.map2 (,) (List.repeat size (index * Tile.size))
+      positions = [0..size - 1]
+        |> List.map ((*) Tile.size) -- [0,50,100]
+        |> List.repeat size         -- [[0,50,100],...]
+        |> List.indexedMap zip      -- [[(0,0),(0,50),(0,100)],...]
+        |> List.concat              -- [(0,0),(0,50),(0,100),(50,0)...]
+        |> List.map (\t -> (toFloat (fst t), toFloat (snd t)))
+        |> List.map addOffset
       align tuple = move (fst tuple) (snd tuple)
       tiles = model
         |> List.map (viewTile address)
