@@ -1,10 +1,12 @@
 module Tile (Model, Action, init, view, update, size, generator) where
 
 import Random
+import Effects          exposing (Effects)
 import Signal           exposing (Address)
 import Graphics.Element exposing (..)
 import Graphics.Input   exposing (..)
 import Graphics.Collage exposing (..)
+import Time             exposing (Time)
 
 
 -- MODEL
@@ -23,10 +25,18 @@ type Kind
   | Straight
 
 
+type alias AnimationState = Maybe { previous : Time, elapsed: Time }
+
+
 type alias Tile =
   { kind : Kind
   , orientation : Orientation
+  , animationState: AnimationState
   }
+
+
+duration : Time
+duration = Time.second
 
 
 type alias Model = Tile
@@ -51,7 +61,7 @@ init pair =
         2 -> South
         _ -> West
   in
-    Tile kind orientation
+    Tile kind orientation Nothing
 
 
 generator : Random.Generator Tile
@@ -65,18 +75,37 @@ generator =
 
 type Action
   = Rotate
+  | Tick Time
 
 
 -- UPDATE
 
 
-update : Action -> Model -> Model
+update : Action -> Model -> (Model, Effects Action)
 update action model =
-  case model.orientation of
-    North -> {model | orientation = East}
-    East -> {model | orientation = South}
-    South -> {model | orientation = West}
-    West -> {model | orientation = North}
+  case action of
+    Rotate ->
+      let newOrientation = case model.orientation of
+            North -> East
+            East -> South
+            South -> West
+            West -> North
+          effect = case model.animationState of
+            Nothing -> Effects.tick Tick
+            Just _ -> Effects.none
+      in
+        ({model | orientation = newOrientation}, effect)
+    Tick time ->
+      let newElapsed = case model.animationState of
+            Nothing -> 0
+            Just {elapsed, previous} -> elapsed + (time - previous)
+      in
+        if newElapsed > duration
+        then ( { model | animationState = Nothing }, Effects.none)
+        else ( { model | animationState = Just { elapsed = newElapsed
+                                               , previous = time } }
+             , Effects.tick Tick
+             )
 
 
 -- VIEW

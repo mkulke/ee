@@ -93,10 +93,18 @@ update action model =
     Tile id tileAction ->
       let updateTile (tileID, tileModel) =
             if tileID == id
-            then (tileID, Tile.update tileAction tileModel)
+            then
+              let (newTileModel, fx) = Tile.update tileAction tileModel
+              in
+                (tileID, newTileModel)
             else (tileID, tileModel)
       in
-        List.map updateTile model |> noFx
+        ( List.map updateTile model
+        , Effects.none
+        )
+        -- model
+        --   |> List.map updateTile
+        --   |> noFx
 
 
 -- VIEW
