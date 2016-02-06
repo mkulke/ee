@@ -7,6 +7,7 @@ import Graphics.Element exposing (..)
 import Graphics.Input   exposing (..)
 import Graphics.Collage exposing (..)
 import Time             exposing (Time)
+import Debug
 
 
 -- MODEL
@@ -99,6 +100,7 @@ update action model =
       let newElapsed = case model.animationState of
             Nothing -> 0
             Just {elapsed, previous} -> elapsed + (time - previous)
+          -- x = Debug.log "state" model.animationState
       in
         if newElapsed > duration
         then ( { model | animationState = Nothing }, Effects.none)
@@ -116,12 +118,16 @@ size = 50
 
 
 rotation : Model -> Float
-rotation { orientation } =
-  case orientation of
-    North -> 0
-    East -> 90
-    South -> 180
-    West -> 270
+rotation { orientation, animationState } =
+  let base = case orientation of
+        North -> 0
+        East -> 90
+        South -> 180
+        West -> 270
+  in
+    case animationState of
+      Nothing -> base
+      Just { elapsed } -> base - (0.09 * (1000 - elapsed))
 
 
 view : Address Action -> Model -> Form
