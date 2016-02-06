@@ -82,29 +82,28 @@ type Action
 -- UPDATE
 
 
-noFx : Model -> (Model, Effects Action)
-noFx model = (model, Effects.none)
-
-
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     NewTick tick -> (generateTiles (size * size) tick, Effects.none)
     Tile id tileAction ->
-      let updateTile (tileID, tileModel) =
+      let updateTile ((tileID, tileModel) as tileTuple) =
             if tileID == id
             then
-              let (newTileModel, fx) = Tile.update tileAction tileModel
+              let (newTileModel, effect) = Tile.update tileAction tileModel
               in
-                (tileID, newTileModel)
-            else (tileID, tileModel)
+                ( (id, newTileModel)
+                , Effects.map (Tile tileID) effect
+                )
+            else (tileTuple, Effects.none)
+          (newTileModel, effects) =
+            model
+              |> List.map updateTile
+              |> List.unzip
       in
-        ( List.map updateTile model
-        , Effects.none
+        ( newTileModel
+        , Effects.batch effects
         )
-        -- model
-        --   |> List.map updateTile
-        --   |> noFx
 
 
 -- VIEW
