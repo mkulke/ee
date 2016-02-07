@@ -86,28 +86,33 @@ update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
     Rotate ->
-      let newOrientation = case model.orientation of
+      let effect = case model.animationState of
+        Nothing -> Effects.tick Tick
+        Just _ -> Effects.none
+      in
+        (model, effect)
+    Tick time ->
+      let elapsed' = case model.animationState of
+            Nothing -> 0
+            Just {elapsed, previous} -> elapsed + (time - previous)
+          orientation' = case model.orientation of
             North -> East
             East -> South
             South -> West
             West -> North
-          effect = case model.animationState of
-            Nothing -> Effects.tick Tick
-            Just _ -> Effects.none
       in
-        ({model | orientation = newOrientation}, effect)
-    Tick time ->
-      let newElapsed = case model.animationState of
-            Nothing -> 0
-            Just {elapsed, previous} -> elapsed + (time - previous)
-          -- x = Debug.log "state" model.animationState
-      in
-        if newElapsed > duration
-        then ( { model | animationState = Nothing }, Effects.none)
-        else ( { model | animationState = Just { elapsed = newElapsed
-                                               , previous = time } }
-             , Effects.tick Tick
+        if elapsed' > duration
+        then ( { model | animationState = Nothing
+                       , orientation = orientation'
+                       }
+             , Effects.none
              )
+        else
+          let animationState' = Just { elapsed = elapsed', previous = time }
+          in
+            ( { model | animationState = animationState' }
+            , Effects.tick Tick
+            )
 
 
 -- VIEW
@@ -127,7 +132,7 @@ rotation { orientation, animationState } =
   in
     case animationState of
       Nothing -> base
-      Just { elapsed } -> base - (0.09 * (1000 - elapsed))
+      Just { elapsed } -> base + (90 * (elapsed / duration))
 
 
 view : Address Action -> Model -> Form
