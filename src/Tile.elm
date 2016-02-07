@@ -7,7 +7,7 @@ import Graphics.Element exposing (..)
 import Graphics.Input   exposing (..)
 import Graphics.Collage exposing (..)
 import Time             exposing (Time)
-import Debug
+import Easing           exposing (float, ease, easeOutBounce)
 
 
 -- MODEL
@@ -129,10 +129,11 @@ rotation { orientation, animationState } =
         East -> 90
         South -> 180
         West -> 270
+      toEased elapsed = ease easeOutBounce float 0 90 duration elapsed
   in
     case animationState of
       Nothing -> base
-      Just { elapsed } -> base + (90 * (elapsed / duration))
+      Just { elapsed } -> base + toEased elapsed
 
 
 view : Address Action -> Model -> Form
