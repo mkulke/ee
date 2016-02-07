@@ -2,6 +2,7 @@ module Main (..) where
 
 import Tile
 import Graphics.Collage exposing (..)
+import Graphics.Element exposing (..)
 import Random
 import StartApp         exposing (start)
 import Task
@@ -124,21 +125,27 @@ view address model =
         |> List.repeat size         -- [[0,50,100],...]
         |> List.indexedMap zip      -- [[(0,0),(0,50),(0,100)],...]
         |> List.concat              -- [(0,0),(0,50),(0,100),(50,0)...]
-        |> List.map (\t -> (toFloat (fst t), toFloat (snd t)))
+        |> List.map (\(x, y)-> (toFloat x, toFloat y))
         |> List.map addOffset
-      align tuple = move (fst tuple) (snd tuple)
       tiles = model
         |> List.map (viewTile address)
+      align forms = forms
         |> List.map2 (,) positions
-        |> List.map align
+        |> List.map (\(x, y) -> move x y)
+        |> collage (Tile.size * size) (Tile.size * size)
+      imgs = tiles
+        |> List.map fst
+        |> align
+      bgs = tiles
+        |> List.map snd
+        |> align
   in
-    collage (Tile.size * size) (Tile.size * size) tiles
+    layers [bgs, imgs]
       |> Html.fromElement
 
 
-viewTile : Address Action -> (ID, Tile.Model) -> Form
+viewTile : Address Action -> (ID, Tile.Model) -> (Form, Form)
 viewTile address tuple =
-  let id = fst tuple
-      tile = snd tuple
+  let (id, tile) = tuple
   in
     Tile.view (Signal.forwardTo address (Tile id)) tile

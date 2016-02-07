@@ -6,6 +6,7 @@ import Signal           exposing (Address)
 import Graphics.Element exposing (..)
 import Graphics.Input   exposing (..)
 import Graphics.Collage exposing (..)
+import Color            exposing (..)
 import Time             exposing (Time)
 import Easing           exposing (float, ease, easeOutBounce)
 
@@ -26,13 +27,15 @@ type Kind
   | Straight
 
 
-type alias AnimationState = Maybe { previous : Time, elapsed: Time }
+type alias EvolvingState = Maybe { previous : Time, elapsed: Time }
 
 
 type alias Tile =
   { kind : Kind
   , orientation : Orientation
-  , animationState: AnimationState
+  , animationState: EvolvingState
+  -- , occupationState: EvolvingState
+  , test: Color
   }
 
 
@@ -45,24 +48,21 @@ type alias Model = Tile
 
 init : (Int, Int) -> Tile
 init pair =
-  let
-    kindNo =
-      fst pair
-    kind =
-      case kindNo of
-        0 -> Left
-        1 -> Right
-        _ -> Straight
-    orientationNo =
-      snd pair
-    orientation =
-      case orientationNo of
-        0 -> North
-        1 -> East
-        2 -> South
-        _ -> West
+  let (kindNo, orientationNo) = pair
+      kind =
+        case kindNo of
+          0 -> Left
+          1 -> Right
+          _ -> Straight
+      orientation =
+        case orientationNo of
+          0 -> North
+          1 -> East
+          2 -> South
+          _ -> West
+      color = if orientationNo == 0 then Color.blue else Color.lightBlue
   in
-    Tile kind orientation Nothing
+    Tile kind orientation Nothing color
 
 
 generator : Random.Generator Tile
@@ -136,19 +136,21 @@ rotation { orientation, animationState } =
       Just { elapsed } -> base + toEased elapsed
 
 
-view : Address Action -> Model -> Form
+view : Address Action -> Model -> (Form, Form)
 view address model =
-  let
-    path { kind } =
-      case kind of
-        Left -> "/img/left.png"
-        Right -> "/img/right.png"
-        Straight -> "/img/straight.png"
-    tileRotate =
-      rotate (rotation model |> degrees)
+  let path { kind } =
+        case kind of
+          Left -> "/img/left.png"
+          Right -> "/img/right.png"
+          Straight -> "/img/straight.png"
+      tileRotate =
+        rotate (rotation model |> degrees)
+      tileImage = path model
+        |> image size size
+        |> Graphics.Input.clickable (Signal.message address Rotate)
+        |> toForm
+        |> tileRotate
+      tileBg = square (toFloat size)
+        |> filled model.test
   in
-    path model
-      |> image size size
-      |> Graphics.Input.clickable (Signal.message address Rotate)
-      |> toForm
-      |> tileRotate
+    (tileImage, tileBg)
