@@ -1,6 +1,7 @@
 module Main (..) where
 
 import Tile
+import Train
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (..)
 import Random
@@ -45,7 +46,10 @@ getTick =
 -- MODEL
 
 
-type alias Model = List (ID, Tile.Model)
+type alias Model =
+  { rails : List (ID, Tile.Model)
+  , train : Train.Model
+  }
 
 
 type alias ID = Int
@@ -53,7 +57,7 @@ type alias ID = Int
 
 init : (Model, Effects Action)
 init =
-  ([], getTick)
+  (Model [] Train.init, getTick)
 
 
 tilesGenerator : Int -> Random.Generator (List Tile.Model)
@@ -61,7 +65,7 @@ tilesGenerator count =
   Random.list count Tile.generator
 
 
-generateTiles : Int -> Int -> Model
+generateTiles : Int -> Int -> List (ID, Tile.Model)
 generateTiles count seed =
   Random.generate (tilesGenerator count) (Random.initialSeed seed)
     |> fst
@@ -86,7 +90,9 @@ type Action
 update : Action -> Model -> (Model, Effects Action)
 update action model =
   case action of
-    NewTick tick -> (generateTiles (size * size) tick, Effects.none)
+    NewTick tick -> ( Model (generateTiles (size * size) tick) Train.init
+                    , Effects.none
+                    )
     Tile id tileAction ->
       let updateTile ((tileID, tileModel) as tileTuple) =
             if tileID == id
@@ -98,11 +104,11 @@ update action model =
                 )
             else (tileTuple, Effects.none)
           (newTileModel, effects) =
-            model
+            model.rails
               |> List.map updateTile
               |> List.unzip
       in
-        ( newTileModel
+        ( { model | rails = newTileModel }
         , Effects.batch effects
         )
 
@@ -127,24 +133,22 @@ view address model =
         |> List.concat              -- [(0,0),(0,50),(0,100),(50,0)...]
         |> List.map (\(x, y)-> (toFloat x, toFloat y))
         |> List.map addOffset
-      tiles = model
+      tiles = model.rails
         |> List.map (viewTile address)
       align forms = forms
         |> List.map2 (,) positions
         |> List.map (\(x, y) -> move x y)
         |> collage (Tile.size * size) (Tile.size * size)
-      imgs = tiles
-        |> List.map fst
+      rails = tiles
         |> align
-      bgs = tiles
-        |> List.map snd
+      train = [Train.view model.train, Train.view model.train]
         |> align
   in
-    layers [bgs, imgs]
+    layers [train, rails]
       |> Html.fromElement
 
 
-viewTile : Address Action -> (ID, Tile.Model) -> (Form, Form)
+viewTile : Address Action -> (ID, Tile.Model) -> Form
 viewTile address tuple =
   let (id, tile) = tuple
   in

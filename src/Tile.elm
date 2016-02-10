@@ -34,8 +34,6 @@ type alias Tile =
   { kind : Kind
   , orientation : Orientation
   , animationState: EvolvingState
-  -- , occupationState: EvolvingState
-  , test: Color
   }
 
 
@@ -60,9 +58,9 @@ init pair =
           1 -> East
           2 -> South
           _ -> West
-      color = if orientationNo == 0 then Color.blue else Color.lightBlue
+      -- color = if orientationNo == 0 then Color.blue else Color.lightBlue
   in
-    Tile kind orientation Nothing color
+    Tile kind orientation Nothing
 
 
 generator : Random.Generator Tile
@@ -136,7 +134,7 @@ rotation { orientation, animationState } =
       Just { elapsed } -> base + toEased elapsed
 
 
-view : Address Action -> Model -> (Form, Form)
+view : Address Action -> Model -> Form
 view address model =
   let path { kind } =
         case kind of
@@ -150,7 +148,5 @@ view address model =
         |> Graphics.Input.clickable (Signal.message address Rotate)
         |> toForm
         |> tileRotate
-      tileBg = square (toFloat size)
-        |> filled model.test
   in
-    (tileImage, tileBg)
+    tileImage
