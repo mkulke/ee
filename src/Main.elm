@@ -11,7 +11,6 @@ import Effects          exposing (Effects, Never)
 import Signal           exposing (Address)
 import Html
 import Time
-import Debug
 
 
 -- MAIN
@@ -123,7 +122,9 @@ update action model =
         , Effects.batch effects
         )
     UpdateTime _ ->
-      ({model | train = ((model.train % 100) + 1)}, Effects.none)
+      let train' = Train.update Train.Increment model.train
+      in
+        ({model | train = train'}, Effects.none)
 
 
 -- VIEW
