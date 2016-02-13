@@ -10,6 +10,7 @@ import Task
 import Effects          exposing (Effects, Never)
 import Signal           exposing (Address)
 import Html
+import Time
 import Debug
 
 
@@ -21,7 +22,7 @@ app = start
   { init = init
   , update = update
   , view = view
-  , inputs = []
+  , inputs = [updateTime]
   }
 
 
@@ -32,6 +33,15 @@ main = app.html
 port tasks : Signal (Task.Task Never ())
 port tasks =
   app.tasks
+
+
+-- INPUTS
+
+
+updateTime : Signal Action
+updateTime =
+  Time.every Time.second
+    |> Signal.map UpdateTime
 
 
 -- EFFECTS
@@ -82,6 +92,7 @@ size = 10
 type Action
   = NewTick Int
   | Tile ID Tile.Action
+  | UpdateTime Time.Time
 
 
 -- UPDATE
@@ -111,6 +122,8 @@ update action model =
         ( { model | rails = newTileModel }
         , Effects.batch effects
         )
+    UpdateTime _ ->
+      ({model | train = ((model.train % 100) + 1)}, Effects.none)
 
 
 -- VIEW
