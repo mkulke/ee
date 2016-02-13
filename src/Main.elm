@@ -141,8 +141,13 @@ view address model =
         |> collage (Tile.size * size) (Tile.size * size)
       rails = tiles
         |> align
-      train = [Train.view model.train, Train.view model.train]
-        |> align
+      train = positions
+        |> List.drop (size * size - model.train)
+        |> List.head
+        |> Maybe.withDefault (0, 0)
+        |> (\position -> move position (Train.view model.train))
+        |> (\form -> form :: [])
+        |> collage (Tile.size * size) (Tile.size * size)
   in
     layers [train, rails]
       |> Html.fromElement

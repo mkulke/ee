@@ -5,7 +5,7 @@ import Color exposing (lightPurple)
 -- MODEL
 
 
-type alias Model = (Int, Int)
+type alias Model = Int
 
 
 size : Int
@@ -14,7 +14,7 @@ size = 50
 
 init : Model
 init =
-  (0, 0)
+  14
 
 
 -- VIEW
