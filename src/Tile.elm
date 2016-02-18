@@ -1,4 +1,4 @@
-module Tile (Model, Action, init, view, update, size, generator) where
+module Tile (Model, Action, Orientation(..), init, view, update, size, generator) where
 
 import Random
 import Effects          exposing (Effects)

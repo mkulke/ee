@@ -122,7 +122,18 @@ update action model =
         , Effects.batch effects
         )
     UpdateTime _ ->
-      let train' = Train.update Train.Increment model.train
+      let (_, rail) = model.rails
+            |> List.drop (size * size - model.train)
+            |> List.head
+            |> Maybe.withDefault (0, (Tile.init (0, 0)))
+          { orientation } = rail
+          modifier = case orientation of
+            Tile.North -> 1
+            Tile.South -> 2
+            Tile.West -> 3
+            Tile.East -> 4
+          position = (model.train + modifier) % 100
+          train' = Train.update (Train.Move position) model.train
       in
         ({model | train = train'}, Effects.none)
 

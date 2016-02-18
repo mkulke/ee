@@ -1,4 +1,4 @@
-module Train (Model, Action(Increment), init, update, size, view) where
+module Train (Model, Action(..), init, update, size, view) where
 import Graphics.Collage exposing (..)
 import Color exposing (lightPurple)
 
@@ -23,6 +23,7 @@ init =
 
 type Action
   = Increment
+  | Move Model
 
 
 -- UPDATE
@@ -32,6 +33,7 @@ update : Action -> Model -> Model
 update action model =
   case action of
     Increment -> (model % 100) + 1
+    Move model' -> model'
 
 
 -- VIEW
