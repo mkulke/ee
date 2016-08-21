@@ -1,4 +1,43 @@
 #elm-app {
-  width: 500px;
-  margin: 40px auto 0 auto;
+  /* width: 500px; */
+  /* margin: 40px auto 0 auto; */
+}
+
+body {
+  margin: 0;
+}
+
+.tile {
+  width: 75px;
+  height: 75px;
+  background-color: green;
+  transition: transform 0.5s ease-out;
+}
+
+.tile.right {
+  background-image: url("/img/right.png");
+}
+
+.tile.left {
+  background-image: url("/img/left.png");
+}
+
+.tile.straight {
+  background-image: url("/img/straight.png");
+}
+
+.tile.north {
+  transform: rotate(0deg);
+}
+
+.tile.east {
+  transform: rotate(90deg);
+}
+
+.tile.south {
+  transform: rotate(180deg);
+}
+
+.tile.west {
+  transform: rotate(270deg);
 }
