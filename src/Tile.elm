@@ -14,6 +14,7 @@ type Orientation
   | East
   | South
   | West
+  | North'
 
 type Kind
   = Left
@@ -42,10 +43,12 @@ toCSSClasses model =
       Right -> "right"
       Straight -> "straight"
     orientation = case model.orientation of
+      -- No animation to North, since we transition from North' to it.
       North -> "north"
-      East -> "east"
-      South -> "south"
-      West -> "west"
+      East -> "east animate"
+      South -> "south animate"
+      West -> "west animate"
+      North' -> "north-north animate"
   in
     "tile " ++ kind ++ " " ++ orientation
 
@@ -55,7 +58,8 @@ rotate orientation =
     North -> East
     East -> South
     South -> West
-    West -> North
+    West -> North'
+    North' -> East
 
 
 -- MSG
@@ -72,7 +76,14 @@ type Msg = Rotate
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    ResetBounce -> { model | bouncing = False }
+    ResetBounce ->
+      -- When the orientation is North' we need to turn it back to North
+      let orientation =
+        if model.orientation == North'
+        then North
+        else model.orientation
+      in
+        { model | bouncing = False, orientation = orientation }
     Rotate ->
       if model.bouncing == False then
         { model

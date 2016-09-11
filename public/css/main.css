@@ -11,6 +11,9 @@ body {
   width: 75px;
   height: 75px;
   background-color: green;
+}
+
+.animate {
   transition: transform 0.5s ease-out;
 }
 
@@ -40,4 +43,8 @@ body {
 
 .tile.west {
   transform: rotate(270deg);
+}
+
+.tile.north-north {
+  transform: rotate(360deg);
 }
