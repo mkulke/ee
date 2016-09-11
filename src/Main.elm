@@ -8,7 +8,7 @@ main = Html.program
   { init = init
   , update = update
   , view = view
-  , subscriptions = \_ -> Sub.none
+  , subscriptions = subscriptions
   }
 
 type alias Model = {
@@ -18,6 +18,14 @@ type alias Model = {
 init : (Model, Cmd Msg)
 init =
   Model Tile.init ! []
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch [ Sub.map Tile (Tile.subscriptions model.tile) ]
 
 
 -- MSG

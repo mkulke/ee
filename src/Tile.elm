@@ -1,9 +1,10 @@
 -- module Tile (Model, Action, Orientation(..), init, view, update, size, generator) where
-module Tile exposing (Model, Msg, init, update, view)
+module Tile exposing (Model, Msg, init, update, view, subscriptions)
 import Html exposing (Html, div)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
-
+import Debounce exposing (bounce)
+import Time exposing (Time, millisecond)
 
 -- MODEL
 
@@ -22,11 +23,16 @@ type Kind
 type alias Model =
   { kind : Kind
   , orientation : Orientation
+  , debounce : Debounce.Model Msg
+  , bouncing : Bool
   }
 
 init : Model
 init =
-  Model Left North
+  Model Left North (Debounce.init debounceTime) False
+
+debounceTime : Time
+debounceTime = millisecond * 500
 
 toCSSClasses : Model -> String
 toCSSClasses model =
@@ -43,21 +49,21 @@ toCSSClasses model =
   in
     "tile " ++ kind ++ " " ++ orientation
 
-rotate : Model -> Model
-rotate model =
-  let orientation' = case model.orientation of
+rotate : Orientation -> Orientation
+rotate orientation =
+  case orientation of
     North -> East
     East -> South
     South -> West
     West -> North
-  in
-    { model | orientation = orientation' }
 
 
 -- MSG
 
 
 type Msg = Rotate
+         | DebounceMsg Time
+         | ResetBounce
 
 
 -- UPDATE
@@ -66,7 +72,29 @@ type Msg = Rotate
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    Rotate -> rotate model
+    ResetBounce -> { model | bouncing = False }
+    Rotate ->
+      if model.bouncing == False then
+        { model
+        | orientation = rotate(model.orientation)
+        , debounce = Debounce.bounce ResetBounce model.debounce
+        , bouncing = True
+        }
+      else model
+    DebounceMsg time ->
+      let result = Debounce.update time model.debounce
+      in
+        case result of
+          (debounce', Nothing) -> { model | debounce = debounce' }
+          (debounce', Just time') -> update time' { model | debounce = debounce' }
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Debounce.subscriptions DebounceMsg model.debounce
 
 
 -- VIEW
