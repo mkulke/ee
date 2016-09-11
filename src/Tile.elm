@@ -1,10 +1,11 @@
 -- module Tile (Model, Action, Orientation(..), init, view, update, size, generator) where
-module Tile exposing (Model, Msg, init, update, view, subscriptions)
+module Tile exposing (Model, Msg, init, update, view, subscriptions, generator)
 import Html exposing (Html, div)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Debounce exposing (bounce)
 import Time exposing (Time, millisecond)
+import Random exposing (Generator)
 
 -- MODEL
 
@@ -28,9 +29,24 @@ type alias Model =
   , bouncing : Bool
   }
 
-init : Model
-init =
-  Model Left North (Debounce.init debounceTime) False
+init : (Int, Int) -> Model
+init pair =
+  let
+    (kindNo, orientationNo) = pair
+    -- x = Debug.log "debug: " ++ (toString kindNo) ++ ":" ++ (toString orientationNo)
+    x = Debug.log "kind" kindNo
+    y = Debug.log "orientation" orientationNo
+    kind = case kindNo of
+      0 -> Left
+      1 -> Right
+      _ -> Straight
+    orientation = case orientationNo of
+      0 -> North
+      1 -> East
+      2 -> South
+      _ -> West
+  in
+    Model kind orientation (Debounce.init debounceTime) False
 
 debounceTime : Time
 debounceTime = millisecond * 500
@@ -51,6 +67,11 @@ toCSSClasses model =
       North' -> "north-north animate"
   in
     "tile " ++ kind ++ " " ++ orientation
+
+generator : Random.Generator Model
+generator =
+  Random.pair (Random.int 0 2) (Random.int 0 3)
+    |> Random.map init
 
 rotate : Orientation -> Orientation
 rotate orientation =
@@ -177,12 +198,6 @@ view model =
 --       -- color = if orientationNo == 0 then Color.blue else Color.lightBlue
 --   in
 --     Tile kind orientation Nothing
-
-
--- generator : Random.Generator Tile
--- generator =
---   Random.pair (Random.int 0 3) (Random.int 0 3)
---     |> Random.map init
 
 
 -- -- ACTION

@@ -1,6 +1,7 @@
 module Main exposing (..)
 import Tile
 import Html exposing (Html, text)
+import Random exposing (generate)
 
 import Html.App as Html
 
@@ -17,7 +18,8 @@ type alias Model = {
 
 init : (Model, Cmd Msg)
 init =
-  Model Tile.init ! []
+  -- Model (Tile.init (0, 0)) ! []
+  Model (Tile.init (0, 0)) ! [Random.generate NewRandom Tile.generator]
 
 
 -- SUBSCRIPTIONS
@@ -25,18 +27,24 @@ init =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ Sub.map Tile (Tile.subscriptions model.tile) ]
+  Sub.batch [ Sub.map Tile (Tile.subscriptions model.tile) ]
 
 
 -- MSG
 
 
 type Msg = Tile Tile.Msg
+         | NewRandom (Tile.Model)
+
+
+-- UPDATE
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Tile msg' -> { model | tile = Tile.update msg' model.tile } ! []
+    NewRandom tile -> { model | tile = tile } ! []
 
 
 -- VIEW
