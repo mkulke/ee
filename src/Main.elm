@@ -1,7 +1,9 @@
 module Main exposing (..)
 import Tile
-import Html exposing (Html, text)
+import Html exposing (Html, text, div)
 import Random exposing (generate)
+import Maybe exposing (withDefault, andThen)
+import List.Extra exposing (getAt, setAt)
 
 import Html.App as Html
 
@@ -13,13 +15,18 @@ main = Html.program
   }
 
 type alias Model = {
-  tile : Tile.Model
+  tiles : List Tile.Model
 }
 
 init : (Model, Cmd Msg)
 init =
-  -- Model (Tile.init (0, 0)) ! []
-  Model (Tile.init (0, 0)) ! [Random.generate NewRandom Tile.generator]
+  Model [ Tile.init (0, 0) ] ! [Random.generate NewRandom tilesGenerator]
+
+type alias Index = Int
+
+tilesGenerator : Random.Generator (List Tile.Model)
+tilesGenerator =
+  Random.list 3 Tile.generator
 
 
 -- SUBSCRIPTIONS
@@ -27,24 +34,37 @@ init =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  Sub.batch [ Sub.map Tile (Tile.subscriptions model.tile) ]
+  let
+    tileSub = \index tile -> Sub.map (Tile index) (Tile.subscriptions tile)
+    tileSubs = List.indexedMap tileSub model.tiles
+  in
+    Sub.batch tileSubs
 
 
 -- MSG
 
 
-type Msg = Tile Tile.Msg
-         | NewRandom (Tile.Model)
+type Msg = Tile Index Tile.Msg
+         | NewRandom (List Tile.Model)
 
 
 -- UPDATE
 
 
+updateTiles : Tile.Msg -> Index -> List Tile.Model -> List Tile.Model
+updateTiles msg index tiles =
+  let
+    tileUpdate = Tile.update msg
+    getTile = getAt index tiles
+    setTile = \tile -> setAt index (tileUpdate tile) tiles
+  in
+    getTile `andThen` setTile |> withDefault tiles
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Tile msg' -> { model | tile = Tile.update msg' model.tile } ! []
-    NewRandom tile -> { model | tile = tile } ! []
+    Tile index msg' -> { model | tiles = updateTiles msg' index model.tiles } ! []
+    NewRandom tiles -> { model | tiles = tiles } ! []
 
 
 -- VIEW
@@ -52,7 +72,13 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-  Html.map Tile (Tile.view model.tile)
+  let
+    tileView = \index tile -> Html.map (Tile index) (Tile.view tile)
+    tilesView = List.indexedMap tileView model.tiles
+  in
+    div [] tilesView
+
+
 -- import Tile
 -- import Train
 -- import Graphics.Collage exposing (..)
