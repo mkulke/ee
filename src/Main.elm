@@ -1,12 +1,14 @@
 module Main exposing (..)
 import Tile
 import Html exposing (Html, text, div)
+import Html.Attributes exposing (class)
 import Random exposing (generate)
 import Maybe exposing (withDefault, andThen)
-import List.Extra exposing (getAt, setAt)
+import List.Extra exposing (getAt, setAt, groupsOf)
 
 import Html.App as Html
 
+main : Program Never
 main = Html.program
   { init = init
   , update = update
@@ -26,7 +28,7 @@ type alias Index = Int
 
 tilesGenerator : Random.Generator (List Tile.Model)
 tilesGenerator =
-  Random.list 3 Tile.generator
+  Random.list 36 Tile.generator
 
 
 -- SUBSCRIPTIONS
@@ -73,10 +75,12 @@ update msg model =
 view : Model -> Html Msg
 view model =
   let
-    tileView = \index tile -> Html.map (Tile index) (Tile.view tile)
+    -- floatClass index = class (if index % 4 == 0 then "nofloat" else "float")
+    tileView = \index tile -> div [] [ Html.map (Tile index) (Tile.view tile) ]
     tilesView = List.indexedMap tileView model.tiles
+    tileRows = groupsOf 6 tilesView |> List.map (\row -> div [ class "float" ] row)
   in
-    div [] tilesView
+    div [ class "grid" ] tileRows
 
 
 -- import Tile

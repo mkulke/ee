@@ -7,6 +7,10 @@ body {
   margin: 0;
 }
 
+.grid .float {
+  float: left;
+}
+
 .tile {
   width: 75px;
   height: 75px;
