@@ -15,7 +15,7 @@ type Orientation
   | East
   | South
   | West
-  | North'
+  | OtherNorth
 
 type Kind
   = Left
@@ -64,7 +64,7 @@ toCSSClasses model =
       East -> "east animate"
       South -> "south animate"
       West -> "west animate"
-      North' -> "north-north animate"
+      OtherNorth -> "north-north animate"
   in
     "tile " ++ kind ++ " " ++ orientation
 
@@ -79,8 +79,8 @@ rotate orientation =
     North -> East
     East -> South
     South -> West
-    West -> North'
-    North' -> East
+    West -> OtherNorth
+    OtherNorth -> East
 
 
 -- MSG
@@ -100,7 +100,7 @@ update msg model =
     ResetBounce ->
       -- When the orientation is North' we need to turn it back to North
       let orientation =
-        if model.orientation == North'
+        if model.orientation == OtherNorth
         then North
         else model.orientation
       in
@@ -117,8 +117,8 @@ update msg model =
       let result = Debounce.update time model.debounce
       in
         case result of
-          (debounce', Nothing) -> { model | debounce = debounce' }
-          (debounce', Just time') -> update time' { model | debounce = debounce' }
+          (newDebounce, Nothing) -> { model | debounce = newDebounce }
+          (newDebounce, Just newTime) -> update newTime { model | debounce = newDebounce }
 
 
 -- SUBSCRIPTIONS

@@ -6,9 +6,7 @@ import Random exposing (generate)
 import Maybe exposing (withDefault, andThen)
 import List.Extra exposing (getAt, setAt, groupsOf)
 
-import Html.App as Html
-
-main : Program Never
+main : Program Never Model Msg
 main = Html.program
   { init = init
   , update = update
@@ -60,12 +58,12 @@ updateTiles msg index tiles =
     getTile = getAt index tiles
     setTile = \tile -> setAt index (tileUpdate tile) tiles
   in
-    getTile `andThen` setTile |> withDefault tiles
+    getTile |> andThen setTile |> withDefault tiles
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Tile index msg' -> { model | tiles = updateTiles msg' index model.tiles } ! []
+    Tile index newMsg -> { model | tiles = updateTiles newMsg index model.tiles } ! []
     NewRandom tiles -> { model | tiles = tiles } ! []
 
 
