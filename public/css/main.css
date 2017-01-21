@@ -12,9 +12,20 @@ body {
 }
 
 .tile {
-  width: 75px;
-  height: 75px;
-  background-color: green;
+  width: 80px;
+  height: 80px;
+  /* background-color: green; */
+}
+
+#train {
+  position: fixed;
+  width: 80px;
+  height: 80px;
+  top: 80px;
+  left: 0px;
+  background-image: url("/img/train.png");
+  background-position: center;
+  transform: rotate(45deg);
 }
 
 .animate {
