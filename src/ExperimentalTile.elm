@@ -25,10 +25,13 @@ updateTick diff model =
     NotTransitioning -> model
     TransitioningSince time ->
       { model | transitioning =
-        if time < 1000
+        if time < transitionTime
         then TransitioningSince (time + diff)
         else NotTransitioning
       }
+
+transitionTime : Float
+transitionTime = 1000
 
 
 -- MSG
@@ -53,15 +56,19 @@ styles : List Css.Mixin -> Html.Attribute msg
 styles =
   Css.asPairs >> Html.Attributes.style
 
+rotation : Transition -> Css.Mixin
 rotation transition =
-  case transition of
-    NotTransitioning -> deg 0
-    TransitioningSince time -> deg (360 / 1000 * time)
+  let
+    degree = case transition of
+      NotTransitioning -> deg 0
+      TransitioningSince time -> deg (360 / transitionTime * time)
+  in
+    transform (rotate degree)
 
 view : Model -> Html Msg
 view model =
   div [ class "experimentalTile"
-      , styles [ transform (rotate (rotation model.transitioning)) ]
+      , styles [ rotation model.transitioning ]
       , class (if model.on then "experimentalOn" else "experimentalOff")
       , onClick Rotate
       ] [ text (toString model.id) ]
