@@ -1,20 +1,19 @@
-module Tile exposing (Model, Msg, init, update, view, subscriptions, generator)
-import Html exposing (Html, div)
-import Html.Attributes exposing (class)
+module Tile exposing (Model, Msg, updateTick, init, update, view, generator)
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
-import Debounce exposing (bounce)
-import Time exposing (Time, millisecond)
+import Css exposing (asPairs, transform, deg, rotate)
 import Random exposing (Generator)
+import String exposing (join)
+
 
 -- MODEL
-
 
 type Orientation
   = North
   | East
   | South
   | West
-  | OtherNorth
 
 type Kind
   = Left
@@ -22,19 +21,21 @@ type Kind
   | Straight
 
 type alias Model =
-  { kind : Kind
-  , orientation : Orientation
-  , debounce : Debounce.Model Msg
-  , bouncing : Bool
+  { kind: Kind
+  , orientation: Orientation
+  , transitioning: Transition
   }
 
+type Transition = NotTransitioning | TransitioningSince Float
+
+generator : Random.Generator Model
+generator =
+  Random.pair (Random.int 0 2) (Random.int 0 3)
+    |> Random.map init
+
 init : (Int, Int) -> Model
-init pair =
+init (kindNo, orientationNo) =
   let
-    (kindNo, orientationNo) = pair
-    -- x = Debug.log "debug: " ++ (toString kindNo) ++ ":" ++ (toString orientationNo)
-    -- x = Debug.log "kind" kindNo
-    -- y = Debug.log "orientation" orientationNo
     kind = case kindNo of
       0 -> Left
       1 -> Right
@@ -45,94 +46,89 @@ init pair =
       2 -> South
       _ -> West
   in
-    Model kind orientation (Debounce.init debounceTime) False
+    Model kind orientation NotTransitioning
 
-debounceTime : Time
-debounceTime = millisecond * 500
+updateTick : Float -> Model -> Model
+updateTick diff model =
+  case model.transitioning of
+    NotTransitioning -> model
+    TransitioningSince time ->
+      { model | transitioning =
+        if time < transitionTime
+        then TransitioningSince (time + diff)
+        else NotTransitioning
+      }
 
-toCSSClasses : Model -> String
-toCSSClasses model =
-  let
-    kind = case model.kind of
-      Left -> "left"
-      Right -> "right"
-      Straight -> "straight"
-    orientation = case model.orientation of
-      -- No animation to North, since we transition from North' to it.
-      North -> "north"
-      East -> "east animate"
-      South -> "south animate"
-      West -> "west animate"
-      OtherNorth -> "north-north animate"
-  in
-    "tile " ++ kind ++ " " ++ orientation
-
-generator : Random.Generator Model
-generator =
-  Random.pair (Random.int 0 2) (Random.int 0 3)
-    |> Random.map init
-
-rotate : Orientation -> Orientation
-rotate orientation =
-  case orientation of
-    North -> East
-    East -> South
-    South -> West
-    West -> OtherNorth
-    OtherNorth -> East
+transitionTime : Float
+transitionTime = 500
 
 
 -- MSG
 
-
 type Msg = Rotate
-         | DebounceMsg Time
-         | ResetBounce
 
 
 -- UPDATE
 
+newOrientation : Model -> Orientation
+newOrientation { orientation } =
+  case orientation of
+    North -> East
+    East -> South
+    South -> West
+    West -> North
 
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    ResetBounce ->
-      -- When the orientation is North' we need to turn it back to North
-      let orientation =
-        if model.orientation == OtherNorth
-        then North
-        else model.orientation
-      in
-        { model | bouncing = False, orientation = orientation }
     Rotate ->
-      if model.bouncing == False then
-        { model
-        | orientation = rotate(model.orientation)
-        , debounce = Debounce.bounce ResetBounce model.debounce
-        , bouncing = True
-        }
+      if model.transitioning == NotTransitioning
+      then { model | transitioning = TransitioningSince 0
+                   , orientation = newOrientation model
+           }
       else model
-    DebounceMsg time ->
-      let result = Debounce.update time model.debounce
-      in
-        case result of
-          (newDebounce, Nothing) -> { model | debounce = newDebounce }
-          (newDebounce, Just newTime) -> update newTime { model | debounce = newDebounce }
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-  Debounce.subscriptions DebounceMsg model.debounce
 
 
 -- VIEW
 
+styles : List Css.Mixin -> Html.Attribute msg
+styles =
+  Css.asPairs >> Html.Attributes.style
+
+rotation : Model -> Css.Mixin
+rotation { orientation, transitioning } =
+  let
+    position = case orientation of
+      North -> 0
+      East -> 90
+      South -> 180
+      West -> 270
+    transitionOffset = position - 90
+    toFraction = \time -> transitionOffset + (90 / transitionTime * time)
+    degree = case transitioning of
+      NotTransitioning -> deg position
+      TransitioningSince time -> toFraction time |> deg
+  in
+    transform (rotate degree)
+
+toCSSClasses : Model -> List String
+toCSSClasses { kind, orientation } =
+  let
+    kindClass = case kind of
+      Left -> "left"
+      Right -> "right"
+      Straight -> "straight"
+    orientationClass = case orientation of
+      North -> "north"
+      East -> "east"
+      South -> "south"
+      West -> "west"
+  in
+    [kindClass, orientationClass]
 
 view : Model -> Html Msg
 view model =
-  div [ class (toCSSClasses model)
+  div [ class (join " " ("tile" :: toCSSClasses model))
+      , styles [ rotation model ]
       , onClick Rotate
       ] []

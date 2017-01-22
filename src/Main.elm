@@ -1,6 +1,6 @@
 module Main exposing (..)
 import Tile
-import ExperimentalTile
+import Tile
 import Html exposing (Html, text, div)
 import Html.Attributes exposing (class)
 import Random exposing (generate)
@@ -20,7 +20,7 @@ main = Html.program
 -- MODEL
 
 type alias Model =
-  { tiles: List ExperimentalTile.Model }
+  { tiles: List Tile.Model }
 
 init : (Model, Cmd Msg)
 init =
@@ -28,9 +28,9 @@ init =
 
 type alias Index = Int
 
-tilesGenerator : Random.Generator (List ExperimentalTile.Model)
+tilesGenerator : Random.Generator (List Tile.Model)
 tilesGenerator =
-  Random.list 36 ExperimentalTile.generator
+  Random.list 36 Tile.generator
 
 
 -- SUBSCRIPTIONS
@@ -42,14 +42,14 @@ subscriptions model =
 
 -- MSG
 
-type Msg = ExperimentalTile Index ExperimentalTile.Msg
+type Msg = Tile Index Tile.Msg
          | Tick Float
-         | NewRandom (List ExperimentalTile.Model)
+         | NewRandom (List Tile.Model)
 
-updateTiles : ExperimentalTile.Msg -> Index -> List ExperimentalTile.Model -> List ExperimentalTile.Model
+updateTiles : Tile.Msg -> Index -> List Tile.Model -> List Tile.Model
 updateTiles msg index tiles =
   let
-    tileUpdate = ExperimentalTile.update msg
+    tileUpdate = Tile.update msg
     getTile = getAt index tiles
     setTile = \tile -> setAt index (tileUpdate tile) tiles
   in
@@ -58,8 +58,8 @@ updateTiles msg index tiles =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    ExperimentalTile index experimentalTileMsg -> { model | tiles = updateTiles experimentalTileMsg index model.tiles } ! []
-    Tick diff -> { model | tiles = List.map (ExperimentalTile.updateTick diff) model.tiles } ! []
+    Tile index tileMsg -> { model | tiles = updateTiles tileMsg index model.tiles } ! []
+    Tick diff -> { model | tiles = List.map (Tile.updateTick diff) model.tiles } ! []
     NewRandom tiles -> { model | tiles = tiles } ! []
 
 
@@ -68,7 +68,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
   let
-    tileView = \index tile -> div [] [ Html.map (ExperimentalTile index) (ExperimentalTile.view tile) ]
+    tileView = \index tile -> div [] [ Html.map (Tile index) (Tile.view tile) ]
     tilesView = List.indexedMap tileView model.tiles
     tileRows = groupsOf 6 tilesView |> List.map (\row -> div [ class "float" ] row)
   in
