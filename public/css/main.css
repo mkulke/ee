@@ -39,9 +39,9 @@ body {
   transform: rotate(45deg);
 }
 
-.animate {
-  transition: transform 0.5s ease-out;
-}
+/* .animate { */
+/*   transition: transform 0.5s ease-out; */
+/* } */
 
 .tile.right {
   background-image: url("/img/right.png");
@@ -53,24 +53,4 @@ body {
 
 .tile.straight {
   background-image: url("/img/straight.png");
-}
-
-.tile.north {
-  transform: rotate(0deg);
-}
-
-.tile.east {
-  transform: rotate(90deg);
-}
-
-.tile.south {
-  transform: rotate(180deg);
-}
-
-.tile.west {
-  transform: rotate(270deg);
-}
-
-.tile.north-north {
-  transform: rotate(360deg);
 }

@@ -33,8 +33,8 @@ init pair =
   let
     (kindNo, orientationNo) = pair
     -- x = Debug.log "debug: " ++ (toString kindNo) ++ ":" ++ (toString orientationNo)
-    x = Debug.log "kind" kindNo
-    y = Debug.log "orientation" orientationNo
+    -- x = Debug.log "kind" kindNo
+    -- y = Debug.log "orientation" orientationNo
     kind = case kindNo of
       0 -> Left
       1 -> Right
