@@ -1,18 +1,13 @@
-module Tile (Model, Action, Orientation(..), init, view, update, size, generator) where
-
-import Random
-import Effects          exposing (Effects)
-import Signal           exposing (Address)
-import Graphics.Element exposing (..)
-import Graphics.Input   exposing (..)
-import Graphics.Collage exposing (..)
-import Color            exposing (..)
-import Time             exposing (Time)
-import Easing           exposing (float, ease, easeOutBounce)
+module Tile exposing (Model, Msg, updateTick, init, update, view, generator)
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (class, style)
+import Html.Events exposing (onClick)
+import Css exposing (asPairs, transform, deg, rotate)
+import Random exposing (Generator)
+import String exposing (join)
 
 
 -- MODEL
-
 
 type Orientation
   = North
@@ -20,133 +15,120 @@ type Orientation
   | South
   | West
 
-
 type Kind
   = Left
   | Right
   | Straight
 
-
-type alias EvolvingState = Maybe { previous : Time, elapsed: Time }
-
-
-type alias Tile =
-  { kind : Kind
-  , orientation : Orientation
-  , animationState: EvolvingState
+type alias Model =
+  { kind: Kind
+  , orientation: Orientation
+  , transitioning: Transition
   }
 
+type Transition = NotTransitioning | TransitioningSince Float
 
-duration : Time
-duration = Time.second
-
-
-type alias Model = Tile
-
-
-init : (Int, Int) -> Tile
-init pair =
-  let (kindNo, orientationNo) = pair
-      kind =
-        case kindNo of
-          0 -> Left
-          1 -> Right
-          _ -> Straight
-      orientation =
-        case orientationNo of
-          0 -> North
-          1 -> East
-          2 -> South
-          _ -> West
-      -- color = if orientationNo == 0 then Color.blue else Color.lightBlue
-  in
-    Tile kind orientation Nothing
-
-
-generator : Random.Generator Tile
+generator : Random.Generator Model
 generator =
-  Random.pair (Random.int 0 3) (Random.int 0 3)
+  Random.pair (Random.int 0 2) (Random.int 0 3)
     |> Random.map init
 
+init : (Int, Int) -> Model
+init (kindNo, orientationNo) =
+  let
+    kind = case kindNo of
+      0 -> Left
+      1 -> Right
+      _ -> Straight
+    orientation = case orientationNo of
+      0 -> North
+      1 -> East
+      2 -> South
+      _ -> West
+  in
+    Model kind orientation NotTransitioning
 
--- ACTION
+updateTick : Float -> Model -> Model
+updateTick diff model =
+  case model.transitioning of
+    NotTransitioning -> model
+    TransitioningSince time ->
+      { model | transitioning =
+        if time < transitionTime
+        then TransitioningSince (time + diff)
+        else NotTransitioning
+      }
+
+transitionTime : Float
+transitionTime = 500
 
 
-type Action
-  = Rotate
-  | Tick Time
+-- MSG
+
+type Msg = Rotate
 
 
 -- UPDATE
 
+newOrientation : Model -> Orientation
+newOrientation { orientation } =
+  case orientation of
+    North -> East
+    East -> South
+    South -> West
+    West -> North
 
-update : Action -> Model -> (Model, Effects Action)
-update action model =
-  case action of
+update : Msg -> Model -> Model
+update msg model =
+  case msg of
     Rotate ->
-      let effect = case model.animationState of
-        Nothing -> Effects.tick Tick
-        Just _ -> Effects.none
-      in
-        (model, effect)
-    Tick time ->
-      let elapsed' = case model.animationState of
-            Nothing -> 0
-            Just {elapsed, previous} -> elapsed + (time - previous)
-          orientation' = case model.orientation of
-            North -> East
-            East -> South
-            South -> West
-            West -> North
-      in
-        if elapsed' > duration
-        then ( { model | animationState = Nothing
-                       , orientation = orientation'
-                       }
-             , Effects.none
-             )
-        else
-          let animationState' = Just { elapsed = elapsed', previous = time }
-          in
-            ( { model | animationState = animationState' }
-            , Effects.tick Tick
-            )
+      if model.transitioning == NotTransitioning
+      then { model | transitioning = TransitioningSince 0
+                   , orientation = newOrientation model
+           }
+      else model
 
 
 -- VIEW
 
+styles : List Css.Mixin -> Html.Attribute msg
+styles =
+  Css.asPairs >> Html.Attributes.style
 
-size : Int
-size = 50
-
-
-rotation : Model -> Float
-rotation { orientation, animationState } =
-  let base = case orientation of
-        North -> 0
-        East -> 90
-        South -> 180
-        West -> 270
-      toEased elapsed = ease easeOutBounce float 0 90 duration elapsed
+rotation : Model -> Css.Mixin
+rotation { orientation, transitioning } =
+  let
+    position = case orientation of
+      North -> 0
+      East -> 90
+      South -> 180
+      West -> 270
+    transitionOffset = position - 90
+    toFraction = \time -> transitionOffset + (90 / transitionTime * time)
+    degree = case transitioning of
+      NotTransitioning -> deg position
+      TransitioningSince time -> toFraction time |> deg
   in
-    case animationState of
-      Nothing -> base
-      Just { elapsed } -> base + toEased elapsed
+    transform (rotate degree)
 
-
-view : Address Action -> Model -> Form
-view address model =
-  let path { kind } =
-        case kind of
-          Left -> "/img/left.png"
-          Right -> "/img/right.png"
-          Straight -> "/img/straight.png"
-      tileRotate =
-        rotate (rotation model |> degrees)
-      tileImage = path model
-        |> image size size
-        |> Graphics.Input.clickable (Signal.message address Rotate)
-        |> toForm
-        |> tileRotate
+toCSSClasses : Model -> List String
+toCSSClasses { kind, orientation } =
+  let
+    kindClass = case kind of
+      Left -> "left"
+      Right -> "right"
+      Straight -> "straight"
+    orientationClass = case orientation of
+      North -> "north"
+      East -> "east"
+      South -> "south"
+      West -> "west"
   in
-    tileImage
+    [kindClass, orientationClass]
+
+view : Model -> Html Msg
+view model =
+  div [ class (join " " ("tile" :: toCSSClasses model))
+      , styles [ rotation model ]
+      , onClick Rotate
+      ] []

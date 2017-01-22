@@ -8,7 +8,7 @@ var historyApiFallback = require('connect-history-api-fallback');
 var source_paths = ["src/*.elm"];
 
 var make = function () {
-    exec("elm-make src/Main.elm --output=public/main.js --yes", function(err, stdout, stderr){
+    exec("elm-make src/Main.elm --warn --output=public/main.js --yes", function(err, stdout, stderr){
         if (err) console.log(stderr);
         else console.log(stdout);
     });
