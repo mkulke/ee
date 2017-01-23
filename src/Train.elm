@@ -6,39 +6,34 @@ import Css exposing (asPairs, opacity)
 
 -- MODEL
 
-type Progress = Done | ProgressingSince Float
+type alias TileCoordinates = (Int, Int)
 
 type alias Model =
-  { tileIndex: Int
-  , progress: Progress
+  { coordinates: TileCoordinates
+  , progress: Float
   }
 
-init : Int -> Model
-init tileIndex = Model tileIndex (ProgressingSince 0)
+init : TileCoordinates -> Model
+init coordinates =
+  Model coordinates 0
 
 updateTick : Float -> Model -> Model
 updateTick diff model =
-  case model.progress of
-    Done -> model
-    ProgressingSince time ->
-      { model | progress =
-        if time < progressTime
-        then ProgressingSince (time + diff)
-        else Done
-      }
+  { model | progress =
+    if model.progress < progressTime
+    then (model.progress + diff)
+    else 0
+  }
 
 progressTime : Float
 progressTime = 1000
-
 
 -- VIEW
 
 calculateOpacity : Model -> Css.Mixin
 calculateOpacity { progress } =
   let
-    value = case progress of
-      Done -> 0
-      ProgressingSince time -> 1 - 1 / 1000 * time
+    value = 1 - 1 / 1000 * progress
   in
     opacity (Css.num value)
 
