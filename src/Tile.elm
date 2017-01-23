@@ -9,15 +9,16 @@ import String exposing (join)
 
 -- MODEL
 
-type Orientation
+type Direction
   = North
   | East
   | South
   | West
 
+type alias Orientation = Direction
+
 type Kind
-  = Left
-  | Right
+  = Turn
   | Straight
 
 type alias Model =
@@ -30,15 +31,14 @@ type Transition = NotTransitioning | TransitioningSince Float
 
 generator : Random.Generator Model
 generator =
-  Random.pair (Random.int 0 2) (Random.int 0 3)
+  Random.pair (Random.int 0 1) (Random.int 0 3)
     |> Random.map init
 
 init : (Int, Int) -> Model
 init (kindNo, orientationNo) =
   let
     kind = case kindNo of
-      0 -> Left
-      1 -> Right
+      0 -> Turn
       _ -> Straight
     orientation = case orientationNo of
       0 -> North
@@ -62,6 +62,39 @@ updateTick diff model =
 transitionTime : Float
 transitionTime = 500
 
+mapTuple : (a -> a) -> (a, a) -> (a, a)
+mapTuple fn tuple =
+  (fn (Tuple.first tuple), fn (Tuple.second tuple))
+
+connections : Model -> (Direction, Direction)
+connections { kind, orientation } =
+  let
+    noOfRotations = rotationFactor orientation
+    rotate = \tuple no -> if no == 0
+                          then tuple
+                          else rotate (mapTuple rotateDirection tuple) (no - 1)
+    unRotatedConnections = case kind of
+      Straight -> (North, South)
+      Turn -> (North, West)
+  in
+    rotate unRotatedConnections noOfRotations
+
+rotationFactor : Orientation -> Int
+rotationFactor orientation =
+  case orientation of
+    North -> 0
+    East -> 1
+    South -> 2
+    West -> 3
+
+rotateDirection : Direction -> Direction
+rotateDirection direction =
+  case direction of
+    North -> East
+    East -> South
+    South -> West
+    West -> North
+
 
 -- MSG
 
@@ -70,13 +103,12 @@ type Msg = Rotate
 
 -- UPDATE
 
-newOrientation : Model -> Orientation
-newOrientation { orientation } =
-  case orientation of
-    North -> East
-    East -> South
-    South -> West
-    West -> North
+debug : Model -> Model
+debug model =
+  let
+    x = Debug.log "connections" (connections model)
+  in
+    model
 
 update : Msg -> Model -> Model
 update msg model =
@@ -84,8 +116,8 @@ update msg model =
     Rotate ->
       if model.transitioning == NotTransitioning
       then { model | transitioning = TransitioningSince 0
-                   , orientation = newOrientation model
-           }
+                   , orientation = rotateDirection model.orientation
+           } |> debug
       else model
 
 
@@ -98,13 +130,11 @@ styles =
 rotation : Model -> Css.Mixin
 rotation { orientation, transitioning } =
   let
-    position = case orientation of
-      North -> 0
-      East -> 90
-      South -> 180
-      West -> 270
-    transitionOffset = position - 90
-    toFraction = \time -> transitionOffset + (90 / transitionTime * time)
+    factor = rotationFactor orientation
+    step = 90
+    position = toFloat (factor * step)
+    transitionOffset = position - step
+    toFraction = \time -> transitionOffset + (step / transitionTime * time)
     degree = case transitioning of
       NotTransitioning -> deg position
       TransitioningSince time -> toFraction time |> deg
@@ -114,15 +144,8 @@ rotation { orientation, transitioning } =
 toCSSClasses : Model -> List String
 toCSSClasses { kind, orientation } =
   let
-    kindClass = case kind of
-      Left -> "left"
-      Right -> "right"
-      Straight -> "straight"
-    orientationClass = case orientation of
-      North -> "north"
-      East -> "east"
-      South -> "south"
-      West -> "west"
+    kindClass = kind |> toString |> String.toLower
+    orientationClass = orientation |> toString |> String.toLower
   in
     [kindClass, orientationClass]
 
