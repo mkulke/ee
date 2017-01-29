@@ -1,4 +1,4 @@
-module Tile exposing (Model, Msg, updateTick, init, update, view, generator)
+module Tile exposing (Model, Msg, Direction(..), connections, updateTick, init, update, view, generator, rotateDirection)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
