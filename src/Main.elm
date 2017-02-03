@@ -112,10 +112,10 @@ update msg model =
 view : Model -> Html Msg
 view model =
   let
-    tileView = \index tile -> Html.map (Tile index) (Tile.view tile)
+    tileView = \index tile -> Html.map (Tile index) (Tile.debugView tile index)
     trainView = \train -> Train.view train
     tilesView = List.indexedMap tileView model.tiles
-    tileRows = groupsOf 6 tilesView |> List.map (\row -> div [ class "float" ] row)
+    tileRows = groupsOf 6 tilesView |> List.map (div [])
     divs = case model.train of
       Nothing -> tileRows
       Just train -> trainView train :: tileRows
