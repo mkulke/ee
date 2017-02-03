@@ -8,6 +8,7 @@ import Random exposing (generate)
 import Maybe exposing (withDefault, andThen)
 import List.Extra exposing (getAt, setAt, groupsOf)
 import AnimationFrame
+import Css exposing (asPairs, px, left, top)
 
 main : Program Never Model Msg
 main = Html.program
@@ -75,19 +76,61 @@ initTrain tiles index =
     coordinates = indexToCoordinates index
   in
     case tilesTail of
-      firstTile :: _ -> Just (Train.init coordinates firstTile)
+      firstTile :: _ -> Just (Train.init index firstTile)
       [] -> Nothing
+
+updateTrainIndex : Int -> Train.Model -> Train.Model
+updateTrainIndex index train =
+  { train | index = index }
+
+updateTrain : Train.Model -> Int -> (Tile.Direction, Tile.Direction) -> Train.Model
+updateTrain train index (from, to) =
+  { train | from = from, to = to, index = index }
+
+bla : List Tile.Model -> Train.Model -> Maybe Train.Model
+bla tiles train =
+  let
+    x = getAt train.index tiles
+    y = Debug.log "mgns" (train.index, x)
+    --   |> Maybe.andThen (Board.getNewDirections train)
+    --   |> Maybe.map (\(from, to) -> { train | from = from, to = to })
+  in
+    -- x
+    Nothing
+
+moveTrain : List Tile.Model -> Train.Model -> Train.Model
+moveTrain tiles train =
+  let
+    x = Board.nextIndex train
+      |> Maybe.map (\index -> { train | index = index })
+      |> Maybe.andThen (bla tiles)
+  in
+    x |> withDefault train
 
 updateTrainTick : Float -> Model -> Train.Model -> Train.Model
 updateTrainTick diff model train =
   let
-    newTrain = Train.updateProgress diff train
-    -- currentTile = newTrain.tile
-    -- nextTile = case newTrain.progress of
-    --   Train.ProgressingSince _ -> Nothing
-    --   Train.Done -> Debug.log "nextTile" (Board.nextTile model.tiles newTrain)
+    progressedTrain = Train.updateProgress diff train
   in
-    newTrain
+    case progressedTrain.progress of
+      Train.ProgressingSince _ -> progressedTrain
+      -- Train.Done -> Debug.log "nextIndex" (Board.nextIndex newTrain)
+      Train.Done -> moveTrain model.tiles progressedTrain
+
+--     nextIndex = case newTrain.progress of
+--       Train.ProgressingSince _ -> -1
+--       Train.Done -> Debug.log "nextIndex" (Board.nextIndex newTrain)
+--     nextTile = getAt nextIndex model.tiles
+--     x = case nextTile of
+--       Nothing -> newTrain
+--       Just tile ->
+--         let
+--           movedTrain = Board.moveTrain newTrain tile
+--           blaTrain = Maybe.map (updateTrainIndex nextIndex) movedTrain
+--         in
+--           blaTrain |> withDefault newTrain
+--   in
+--     newTrain
 
 updateTick : Float -> Model -> Model
 updateTick diff model =
@@ -109,11 +152,25 @@ update msg model =
 
 -- VIEW
 
+calculateOffsets : Train.Model -> List Css.Mixin
+calculateOffsets { index } =
+  let
+    coordinates = indexToCoordinates index
+    x = toFloat (Tuple.first coordinates) * 80
+    y = toFloat (Tuple.second coordinates) * 80
+  in
+    [top (px y), left (px x)]
+
+styles : List Css.Mixin -> Html.Attribute msg
+styles =
+  Css.asPairs >> Html.Attributes.style
+
 view : Model -> Html Msg
 view model =
   let
     tileView = \index tile -> Html.map (Tile index) (Tile.debugView tile index)
-    trainView = \train -> Train.view train
+    trainStyles = Maybe.map calculateOffsets model.train |> withDefault []
+    trainView = \train -> div [ class "bla", styles trainStyles ] [ Train.view train ]
     tilesView = List.indexedMap tileView model.tiles
     tileRows = groupsOf 6 tilesView |> List.map (div [])
     divs = case model.train of

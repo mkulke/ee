@@ -1,4 +1,4 @@
-module Board exposing (nextTile, moveTrain)
+module Board exposing (nextTile, nextIndex, moveTrain, getNewDirections, hasContact)
 import Tile
 import Train
 import Maybe
@@ -12,7 +12,23 @@ boardHeight = 6
 
 coordinatesToIndex : (Int, Int) -> Int
 coordinatesToIndex (x, y) =
-  y * boardHeight + boardWidth
+  y * boardHeight + boardWidth * x
+
+hasContact : Train.Model -> Tile.Model -> Bool
+hasContact train tile =
+  False
+
+getNewDirections : Train.Model -> Tile.Model -> Maybe (Tile.Direction, Tile.Direction)
+getNewDirections train tile =
+  let
+    trainDirection = train.to
+    rotateTwice = Tile.rotateDirection >> Tile.rotateDirection
+    trainConnection = rotateTwice trainDirection
+    (oneEnd, otherEnd) = Tile.connections tile
+  in
+    if trainConnection == oneEnd then Just (oneEnd, otherEnd)
+    else if trainConnection == otherEnd then Just (otherEnd, oneEnd)
+    else Nothing
 
 moveTrain : Train.Model -> Tile.Model -> Maybe Train.Model
 moveTrain train tile =
@@ -26,11 +42,26 @@ moveTrain train tile =
     else if trainConnection == otherEnd then Just { train | to = oneEnd, from = otherEnd }
     else Nothing
 
+nextIndex : Train.Model -> Maybe Int
+nextIndex train =
+  let
+    max = boardWidth * boardHeight
+    index = train.index
+    destinationIndex = case train.to of
+      Tile.North -> index - boardWidth
+      Tile.East -> index + 1
+      Tile.South -> index + boardWidth
+      Tile.West -> index - 1
+  in
+    if destinationIndex >= 0 && destinationIndex < max
+    then Just destinationIndex
+    else Nothing
+
 nextTile : List Tile.Model -> Train.Model -> Maybe Tile.Model
 nextTile tiles train =
   let
     max = boardWidth * boardHeight
-    index = coordinatesToIndex train.coordinates
+    index = train.index
     destinationIndex = case train.to of
       Tile.North -> index - boardWidth
       Tile.East -> index + 1

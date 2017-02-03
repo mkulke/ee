@@ -22,12 +22,17 @@ body {
   background-color: blue;
 }
 
-.train {
+.bla {
   position: absolute;
   width: 80px;
   height: 80px;
-  background-color: green;
   z-index: 1;
+}
+
+.train {
+  width: 100%;
+  height: 100%;
+  background-color: green;
 }
 
 /* #train { */
