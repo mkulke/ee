@@ -1,4 +1,4 @@
-module Tile exposing (Model, Msg, Direction(..), connections, updateTick, init, update, view, generator, rotateDirection)
+module Tile exposing (Model, Msg, Direction(..), connections, updateTick, init, update, debugView, view, generator, rotateDirection)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
@@ -150,6 +150,13 @@ toCSSClasses { kind, orientation } =
     orientationClass = orientation |> toString |> String.toLower
   in
     [kindClass, orientationClass]
+
+debugView : Model -> Int -> Html Msg
+debugView model index =
+  div [ class (join " " ("tile" :: toCSSClasses model))
+      , styles [ rotation model ]
+      , onClick Rotate
+      ] [ text (toString index) ]
 
 view : Model -> Html Msg
 view model =
