@@ -7,23 +7,21 @@ import Css exposing (asPairs, px, opacity, left, top)
 
 -- MODEL
 
-type alias TileCoordinates = (Int, Int)
 type Progress = ProgressingSince Float | Done
 
 type alias Model =
-  { coordinates: TileCoordinates
+  { index: Int
   , from: Tile.Direction
   , to: Tile.Direction
-  , tile: Tile.Model
   , progress: Progress
   }
 
-init : TileCoordinates -> Tile.Model -> Model
-init coordinates tile =
+init : Int -> Tile.Model -> Model
+init index tile =
   let
     (from, to) = Tile.connections tile
   in
-    Model coordinates from to tile (ProgressingSince 0)
+    Model index from to (ProgressingSince 0)
 
 updateProgress : Float -> Model -> Model
 updateProgress diff model =
@@ -38,7 +36,8 @@ updateProgress diff model =
     { model | progress = progress }
 
 progressTime : Float
-progressTime = 1000
+progressTime = 2000
+
 
 -- VIEW
 
@@ -51,8 +50,8 @@ calculateOpacity { progress } =
   in
     opacity (Css.num value)
 
-calculateOffsets : Model -> List Css.Mixin
-calculateOffsets { coordinates } =
+calculateOffsets : (Int, Int) -> List Css.Mixin
+calculateOffsets coordinates =
   let
     x = toFloat (Tuple.first coordinates) * 80
     y = toFloat (Tuple.second coordinates) * 80
@@ -63,8 +62,8 @@ styles : List Css.Mixin -> Html.Attribute msg
 styles =
   Css.asPairs >> Html.Attributes.style
 
-view : Model -> Html msg
-view model =
+view : (Int, Int) -> Model -> Html msg
+view coordinates model =
   div [ class "train"
-      , styles (calculateOpacity model :: calculateOffsets model)
+      , styles (calculateOpacity model :: calculateOffsets coordinates)
       ] []

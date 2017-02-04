@@ -27,23 +27,9 @@ type alias Model =
 
 init : (Model, Cmd Msg)
 init =
-  Model [] Nothing ! [Random.generate NewRandom tilesGenerator]
+  Model [] Nothing ! [Random.generate NewRandom Board.tilesGenerator]
 
 type alias Index = Int
-
-boardWidth : Int
-boardWidth = 6
-
-boardHeight : Int
-boardHeight = 6
-
-tilesGenerator : Random.Generator (List Tile.Model)
-tilesGenerator =
-  Random.list (boardWidth * boardHeight) Tile.generator
-
-indexToCoordinates : Int -> (Int, Int)
-indexToCoordinates index =
-  (index % boardWidth, index // boardHeight)
 
 
 -- SUBSCRIPTIONS
@@ -72,22 +58,33 @@ initTrain : List Tile.Model -> Int -> Maybe Train.Model
 initTrain tiles index =
   let
     tilesTail = List.drop index tiles
-    coordinates = indexToCoordinates index
+    coordinates = Board.indexToCoordinates index
   in
     case tilesTail of
-      firstTile :: _ -> Just (Train.init coordinates firstTile)
+      firstTile :: _ -> Just (Train.init index firstTile)
       [] -> Nothing
+
+moveTrain : List Tile.Model -> Train.Model -> Train.Model
+moveTrain tiles train =
+  let
+    setIndex = \index -> { train | index = index }
+    setDirection = \newTrain -> getAt newTrain.index tiles
+      |> Maybe.andThen (Board.getNewDirections newTrain)
+      |> Maybe.map (\(from, to) -> { newTrain | from = from, to = to })
+  in
+    Board.nextIndex train
+      |> Maybe.map setIndex
+      |> Maybe.andThen setDirection
+      |> withDefault train
 
 updateTrainTick : Float -> Model -> Train.Model -> Train.Model
 updateTrainTick diff model train =
   let
-    newTrain = Train.updateProgress diff train
-    -- currentTile = newTrain.tile
-    -- nextTile = case newTrain.progress of
-    --   Train.ProgressingSince _ -> Nothing
-    --   Train.Done -> Debug.log "nextTile" (Board.nextTile model.tiles newTrain)
+    progressedTrain = Train.updateProgress diff train
   in
-    newTrain
+    case progressedTrain.progress of
+      Train.ProgressingSince _ -> progressedTrain
+      Train.Done -> moveTrain model.tiles progressedTrain
 
 updateTick : Float -> Model -> Model
 updateTick diff model =
@@ -113,7 +110,7 @@ view : Model -> Html Msg
 view model =
   let
     tileView = \index tile -> Html.map (Tile index) (Tile.debugView tile index)
-    trainView = \train -> Train.view train
+    trainView = \train -> Train.view (Board.indexToCoordinates train.index) train
     tilesView = List.indexedMap tileView model.tiles
     tileRows = groupsOf 6 tilesView |> List.map (div [])
     divs = case model.train of
