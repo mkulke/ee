@@ -21,8 +21,6 @@ type Kind
   = Turn
   | Straight
 
-type alias Coordinates = (Int, Int)
-
 type alias Model =
   { kind: Kind
   , orientation: Orientation

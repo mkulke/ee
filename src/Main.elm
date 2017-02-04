@@ -95,12 +95,19 @@ updateTick diff model =
     , train = Maybe.map updateTrain model.train
     }
 
+populateBoard : Model -> List Tile.Model -> Model
+populateBoard model tiles =
+  let
+    fixedTiles = Board.fixFirstTile tiles
+  in
+    { model | tiles = fixedTiles, train = initTrain fixedTiles 0 }
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Tile index tileMsg -> { model | tiles = updateTiles tileMsg index model.tiles } ! []
     Tick diff -> updateTick diff model ! []
-    NewRandom tiles -> { model | tiles = tiles, train = initTrain tiles 0 } ! []
+    NewRandom tiles -> populateBoard model tiles ! []
 
 
 -- VIEW

@@ -1,4 +1,4 @@
-module Board exposing (nextIndex, getNewDirections, tilesGenerator, calculateOffsets)
+module Board exposing (nextIndex, getNewDirections, tilesGenerator, calculateOffsets, fixFirstTile)
 import Tile
 import Train
 import Maybe
@@ -10,6 +10,21 @@ boardWidth = 6
 
 boardHeight : Int
 boardHeight = 6
+
+-- the first tile should not point to either North or West
+fixFirstTile : List Tile.Model -> List Tile.Model
+fixFirstTile tiles =
+  let
+    rotateTwice = Tile.rotateDirection >> Tile.rotateDirection
+    turnAround = \tile -> { tile | orientation = rotateTwice tile.orientation }
+    fix = \tile -> case Tile.connections tile of
+      (_, Tile.North) -> turnAround tile
+      (_, Tile.West) -> turnAround tile
+      _ -> tile
+  in
+    case tiles of
+      firstTile :: otherTiles -> (fix firstTile) :: otherTiles
+      [] -> []
 
 tilesGenerator : Random.Generator (List Tile.Model)
 tilesGenerator =
