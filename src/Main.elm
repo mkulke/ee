@@ -66,8 +66,10 @@ initTrain tiles index =
 moveTrain : List Tile.Model -> Train.Model -> Train.Model
 moveTrain tiles train =
   let
+    assertIdle = \tile -> if Tile.idle tile then Just tile else Nothing
     setIndex = \index -> { train | index = index }
     setDirection = \newTrain -> getAt newTrain.index tiles
+      |> Maybe.andThen assertIdle
       |> Maybe.andThen (Board.getNewDirections newTrain)
       |> Maybe.map (\(from, to) -> { newTrain | from = from, to = to })
   in

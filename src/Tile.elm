@@ -1,4 +1,4 @@
-module Tile exposing (Model, Msg, Direction(..), connections, updateTick, init, update, debugView, view, generator, rotateDirection)
+module Tile exposing (Model, Msg, Direction(..), idle, connections, updateTick, init, update, debugView, view, generator, rotateDirection)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
@@ -61,6 +61,10 @@ updateTick diff model =
 
 transitionTime : Float
 transitionTime = 500
+
+idle : Model -> Bool
+idle model =
+  model.transitioning == NotTransitioning
 
 mapTuple : (a -> a) -> (a, a) -> (a, a)
 mapTuple fn tuple =
