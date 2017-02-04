@@ -1,8 +1,9 @@
-module Board exposing (nextIndex, getNewDirections, tilesGenerator, indexToCoordinates)
+module Board exposing (nextIndex, getNewDirections, tilesGenerator, calculateOffsets)
 import Tile
 import Train
 import Maybe
 import Random exposing (generate)
+import Css exposing (px, left, top)
 
 boardWidth : Int
 boardWidth = 6
@@ -29,6 +30,15 @@ getNewDirections train tile =
     if trainConnection == oneEnd then Just (oneEnd, otherEnd)
     else if trainConnection == otherEnd then Just (otherEnd, oneEnd)
     else Nothing
+
+calculateOffsets : Int -> List Css.Mixin
+calculateOffsets index =
+  let
+    coordinates = indexToCoordinates index
+    x = toFloat (Tuple.first coordinates) * 80
+    y = toFloat (Tuple.second coordinates) * 80
+  in
+    [top (px y), left (px x)]
 
 nextIndex : Train.Model -> Maybe Int
 nextIndex train =

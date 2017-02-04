@@ -62,8 +62,8 @@ styles : List Css.Mixin -> Html.Attribute msg
 styles =
   Css.asPairs >> Html.Attributes.style
 
-view : (Int, Int) -> Model -> Html msg
-view coordinates model =
+view : (Int -> List Css.Mixin) -> Model -> Html msg
+view calculateOffsets model =
   div [ class "train"
-      , styles (calculateOpacity model :: calculateOffsets coordinates)
+      , styles (calculateOpacity model :: calculateOffsets model.index)
       ] []

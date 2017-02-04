@@ -58,7 +58,6 @@ initTrain : List Tile.Model -> Int -> Maybe Train.Model
 initTrain tiles index =
   let
     tilesTail = List.drop index tiles
-    coordinates = Board.indexToCoordinates index
   in
     case tilesTail of
       firstTile :: _ -> Just (Train.init index firstTile)
@@ -110,7 +109,7 @@ view : Model -> Html Msg
 view model =
   let
     tileView = \index tile -> Html.map (Tile index) (Tile.debugView tile index)
-    trainView = \train -> Train.view (Board.indexToCoordinates train.index) train
+    trainView = \train -> Train.view Board.calculateOffsets train
     tilesView = List.indexedMap tileView model.tiles
     tileRows = groupsOf 6 tilesView |> List.map (div [])
     divs = case model.train of
