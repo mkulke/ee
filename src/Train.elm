@@ -36,7 +36,8 @@ updateProgress diff model =
     { model | progress = progress }
 
 progressTime : Float
-progressTime = 3000
+progressTime = 2000
+
 
 -- VIEW
 
@@ -49,21 +50,20 @@ calculateOpacity { progress } =
   in
     opacity (Css.num value)
 
--- calculateOffsets : Model -> List Css.Mixin
--- calculateOffsets { coordinates } =
---   let
---     x = toFloat (Tuple.first coordinates) * 80
---     y = toFloat (Tuple.second coordinates) * 80
---   in
---     [top (px y), left (px x)]
+calculateOffsets : (Int, Int) -> List Css.Mixin
+calculateOffsets coordinates =
+  let
+    x = toFloat (Tuple.first coordinates) * 80
+    y = toFloat (Tuple.second coordinates) * 80
+  in
+    [top (px y), left (px x)]
 
 styles : List Css.Mixin -> Html.Attribute msg
 styles =
   Css.asPairs >> Html.Attributes.style
 
-view : Model -> Html msg
-view model =
+view : (Int, Int) -> Model -> Html msg
+view coordinates model =
   div [ class "train"
-      -- , styles (calculateOpacity model :: calculateOffsets model)
-      , styles [ calculateOpacity model ]
+      , styles (calculateOpacity model :: calculateOffsets coordinates)
       ] []

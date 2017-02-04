@@ -105,13 +105,6 @@ type Msg = Rotate
 
 -- UPDATE
 
-debug : Model -> Model
-debug model =
-  let
-    x = Debug.log "connections" (connections model)
-  in
-    model
-
 update : Msg -> Model -> Model
 update msg model =
   case msg of
@@ -119,7 +112,7 @@ update msg model =
       if model.transitioning == NotTransitioning
       then { model | transitioning = TransitioningSince 0
                    , orientation = rotateDirection model.orientation
-           } |> debug
+           }
       else model
 
 

@@ -7,56 +7,19 @@ body {
   margin: 0;
 }
 
-.grid .float {
-  float: left;
-}
-
 .tile {
   width: 80px;
   height: 80px;
-  /* background-color: green; */
   display: inline-block;
 }
 
-.experimentalOn {
-  background-color: blue;
-}
-
-.bla {
+.train {
   position: absolute;
   width: 80px;
   height: 80px;
   z-index: 1;
-}
-
-.train {
-  width: 100%;
-  height: 100%;
   background-color: green;
 }
-
-/* #train { */
-/*   position: fixed; */
-/*   width: 80px; */
-/*   height: 80px; */
-/*   top: 80px; */
-/*   left: 0px; */
-/*   background-image: url("/img/train.png"); */
-/*   background-position: center; */
-/*   transform: rotate(45deg); */
-/* } */
-
-/* .animate { */
-/*   transition: transform 0.5s ease-out; */
-/* } */
-
-/* .tile.right { */
-/*   background-image: url("/img/right.png"); */
-/* } */
-
-/* .tile.left { */
-/*   background-image: url("/img/left.png"); */
-/* } */
 
 .tile.turn {
   background-image: url("/img/turn.png");
