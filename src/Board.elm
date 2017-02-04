@@ -60,12 +60,9 @@ nextIndex train =
   let
     max = boardWidth * boardHeight
     index = train.index
-    destinationIndex = case train.to of
-      Tile.North -> index - boardWidth
-      Tile.East -> index + 1
-      Tile.South -> index + boardWidth
-      Tile.West -> index - 1
   in
-    if destinationIndex >= 0 && destinationIndex < max
-    then Just destinationIndex
-    else Nothing
+    case train.to of
+      Tile.North -> if index - boardWidth > 0 then Just (index - boardWidth) else Nothing
+      Tile.East -> if ((index + 1) % boardWidth) > 0 then Just (index + 1) else Nothing
+      Tile.South -> if index + boardWidth < max then Just (index + boardWidth) else Nothing
+      Tile.West -> if (index % boardWidth) > 0 then Just (index - 1) else Nothing
