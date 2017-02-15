@@ -44,14 +44,24 @@ getNewDirections train tile =
     else if trainConnection == otherEnd then Just (otherEnd, oneEnd)
     else Nothing
 
-calculateOffsets : Int -> List Css.Mixin
-calculateOffsets index =
+calculateOffsets : Train.Model -> Float -> (Css.Mixin, Css.Mixin)
+calculateOffsets train progressFactor =
   let
+    { index, from, to } = train
     coordinates = indexToCoordinates index
-    x = toFloat (Tuple.first coordinates) * 80
-    y = toFloat (Tuple.second coordinates) * 80
+    xOffset = toFloat (Tuple.first coordinates) * 80
+    yOffset = toFloat (Tuple.second coordinates) * 80
+    position = \direction -> case direction of
+      Tile.North -> (xOffset, yOffset - 40)
+      Tile.East -> (xOffset + 40, yOffset)
+      Tile.South -> (xOffset, yOffset + 40)
+      Tile.West -> (xOffset - 40, yOffset)
+    (xStart, yStart) = position from
+    (xEnd, yEnd) = position to
+    y = yStart + ((yEnd - yStart) * progressFactor)
+    x = xStart + ((xEnd - xStart) * progressFactor)
   in
-    [top (px y), left (px x)]
+    (top (px y), left (px x))
 
 nextIndex : Train.Model -> Maybe Int
 nextIndex train =
