@@ -25,9 +25,13 @@ type alias Model =
   , train: Maybe Train.Model
   }
 
+generateTiles : Cmd Msg
+generateTiles =
+  Random.generate NewRandom Board.tilesGenerator
+
 init : (Model, Cmd Msg)
 init =
-  Model [] Nothing ! [Random.generate NewRandom Board.tilesGenerator]
+  Model [] Nothing ! [generateTiles]
 
 type alias Index = Int
 
@@ -99,17 +103,16 @@ updateTick diff model =
 
 populateBoard : Model -> List Tile.Model -> Model
 populateBoard model tiles =
-  let
-    fixedTiles = Board.fixFirstTile tiles
-  in
-    { model | tiles = fixedTiles, train = initTrain fixedTiles 0 }
+    { model | tiles = tiles, train = initTrain tiles 0 }
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Tile index tileMsg -> { model | tiles = updateTiles tileMsg index model.tiles } ! []
     Tick diff -> updateTick diff model ! []
-    NewRandom tiles -> populateBoard model tiles ! []
+    NewRandom tiles -> if Board.tilesOk tiles
+                       then populateBoard model tiles ! []
+                       else model ! [generateTiles]
 
 
 -- VIEW
