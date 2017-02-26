@@ -58,16 +58,18 @@ styles : List Css.Mixin -> Html.Attribute msg
 styles =
   Css.asPairs >> Html.Attributes.style
 
-view : (Model -> Float -> (Css.Mixin, Css.Mixin)) -> Model -> Html msg
-view calculateOffsets model =
+view : (Model -> Float -> (Css.Mixin, Css.Mixin)) -> (Model -> Float -> Css.Mixin) -> Model -> Html msg
+view calculateOffsets calculateRotation model =
   let
     factor = progressFactor model.progress
     (topOffset, leftOffset) = calculateOffsets model factor
+    rotation = calculateRotation model factor
     opacity = calculateOpacity model
   in
     div [ class "train"
         , styles [ opacity
                  , topOffset
                  , leftOffset
+                 , rotation
                  ]
         ] []

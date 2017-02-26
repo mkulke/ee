@@ -1,9 +1,9 @@
-module Board exposing (nextIndex, getNewDirections, tilesGenerator, calculateOffsets, tilesOk)
-import Tile
+module Board exposing (nextIndex, getNewDirections, tilesGenerator, calculateOffsets, calculateRotation, tilesOk)
+import Tile exposing (Direction(..))
 import Train
 import Maybe
 import Random exposing (generate)
-import Css exposing (px, left, top)
+import Css exposing (px, left, top, deg, transform, rotate)
 
 boardWidth : Int
 boardWidth = 6
@@ -57,6 +57,26 @@ calculateYTurn delta factor =
     angle = turns (factor / 4)
   in
     delta * sin angle
+
+calculateRotation : Train.Model -> Float -> Css.Mixin
+calculateRotation model progressFactor =
+  let
+    degree = case (model.from, model.to) of
+      (North, South) -> 0
+      (North, West) -> 0 + round (90 * progressFactor)
+      (North, East) -> 0 - round (90 * progressFactor)
+      (East, West) -> 90
+      (East, North) -> 90 + round (90 * progressFactor)
+      (East, South) -> 90 - round (90 * progressFactor)
+      (West, East) -> 270
+      (West, South) -> 270 + round (90 * progressFactor)
+      (West, North) -> 270 - round (90 * progressFactor)
+      (South, North) -> 180
+      (South, East) -> 180 + round (90 * progressFactor)
+      (South, West) -> 180 - round (90 * progressFactor)
+      _ -> 0
+  in
+    transform (rotate (deg degree))
 
 
 calculateDelta : (Tile.Direction, Tile.Direction) -> Float -> (Float, Float)
