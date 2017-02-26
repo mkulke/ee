@@ -60,7 +60,7 @@ nextIndex train =
     index = train.index
   in
     case train.to of
-      Tile.North -> if index - boardWidth > 0 then Just (index - boardWidth) else Nothing
+      Tile.North -> if index - boardWidth >= 0 then Just (index - boardWidth) else Nothing
       Tile.East -> if ((index + 1) % boardWidth) > 0 then Just (index + 1) else Nothing
       Tile.South -> if index + boardWidth < max then Just (index + boardWidth) else Nothing
       Tile.West -> if (index % boardWidth) > 0 then Just (index - 1) else Nothing
