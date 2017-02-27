@@ -67,7 +67,7 @@ initTrain tiles index =
       firstTile :: _ -> Just (Train.init index firstTile)
       [] -> Nothing
 
-moveTrain : List Tile.Model -> Train.Model -> Train.Model
+moveTrain : List Tile.Model -> Train.Model -> Maybe Train.Model
 moveTrain tiles train =
   let
     assertIdle = \tile -> if Tile.idle tile then Just tile else Nothing
@@ -80,7 +80,6 @@ moveTrain tiles train =
     Board.nextIndex train
       |> Maybe.map setIndex
       |> Maybe.andThen setDirection
-      |> withDefault train
 
 updateTrainTick : Float -> Model -> Train.Model -> Train.Model
 updateTrainTick diff model train =
@@ -90,6 +89,7 @@ updateTrainTick diff model train =
     case progressedTrain.progress of
       Train.ProgressingSince _ -> progressedTrain
       Train.Done -> moveTrain model.tiles progressedTrain
+        |> withDefault train
 
 updateTick : Float -> Model -> Model
 updateTick diff model =
@@ -121,7 +121,7 @@ view : Model -> Html Msg
 view model =
   let
     tileView = \index tile -> Html.map (Tile index) (Tile.debugView tile index)
-    trainView = \train -> Train.view Board.calculateOffsets train
+    trainView = \train -> Train.view Board.calculateOffsets Board.calculateRotation train
     tilesView = List.indexedMap tileView model.tiles
     tileRows = groupsOf 6 tilesView |> List.map (div [])
     divs = case model.train of
