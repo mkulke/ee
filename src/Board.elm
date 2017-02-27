@@ -58,6 +58,7 @@ calculateYTurn delta factor =
   in
     delta * sin angle
 
+
 calculateRotation : Train.Model -> Float -> Css.Mixin
 calculateRotation model progressFactor =
   let
@@ -78,59 +79,33 @@ calculateRotation model progressFactor =
   in
     transform (rotate (deg degree))
 
+type Direction = Clockwise | Counterclockwise
 
 calculateDelta : (Tile.Direction, Tile.Direction) -> Float -> (Float, Float)
 calculateDelta movement progressFactor =
   let
     angleOffset = -0.25
-    coordinates = \angle (xOffset, yOffset) ->
-      ((40 * cos angle) + xOffset, (40 * sin angle) + yOffset)
+    progress = 0.25 * progressFactor
+    angle = \(offset, direction) ->
+      case direction of
+        Clockwise -> turns (offset + progress + angleOffset)
+        Counterclockwise -> turns (offset - progress + angleOffset)
+    turn = angle >> \angle_ -> (40 * cos angle_, 40 * sin angle_)
+    add = \(x1, y1) (x2, y2) -> (x1 + x2, y1 + y2)
   in
     case movement of
-      (Tile.North, Tile.South) -> (0, 80 * progressFactor - 40)
-      (Tile.North, Tile.East) ->
-        let
-          angle = turns ((0.75 - (0.25 * progressFactor)) + angleOffset)
-        in
-          coordinates angle (40, -40)
-      (Tile.North, Tile.West) ->
-        let
-          angle = turns (((0.25 * progressFactor) + 0.25) + angleOffset)
-        in
-          coordinates angle (-40, -40)
-      (Tile.South, Tile.North) -> (0, -80 * progressFactor + 40)
-      (Tile.South, Tile.East) ->
-        let
-          angle = turns ((0.75 + (0.25 * progressFactor)) + angleOffset)
-        in
-          coordinates angle (40, 40)
-      (Tile.South, Tile.West) ->
-        let
-          angle = turns ((0.25 - (0.25 * progressFactor)) + angleOffset)
-        in
-          coordinates angle (-40, 40)
-      (Tile.East, Tile.West) -> (-80 * progressFactor + 40, 0)
-      (Tile.East, Tile.North) ->
-        let
-          angle = turns ((0.5 + (0.25 * progressFactor)) + angleOffset)
-        in
-          coordinates angle (40, -40)
-      (Tile.East, Tile.South) ->
-        let
-          angle = turns ((1.0 - (0.25 * progressFactor)) + angleOffset)
-        in
-          coordinates angle (40, 40)
-      (Tile.West, Tile.East) -> (80 * progressFactor - 40, 0)
-      (Tile.West, Tile.South) ->
-        let
-          angle = turns ((0.25 * progressFactor) + angleOffset)
-        in
-          coordinates angle (-40, 40)
-      (Tile.West, Tile.North) ->
-        let
-          angle = turns ((0.5 - (0.25 * progressFactor)) + angleOffset)
-        in
-          coordinates angle (-40, -40)
+      (North, South) -> (0, 80 * progressFactor - 40)
+      (North, East) -> turn (0.75, Counterclockwise) |> add (40, -40)
+      (North, West) -> turn (0.25, Clockwise) |> add (-40, -40)
+      (South, North) -> (0, -80 * progressFactor + 40)
+      (South, East) -> turn (0.75, Clockwise) |> add (40, 40)
+      (South, West) -> turn (0.25, Counterclockwise) |> add (-40, 40)
+      (East, West) -> (-80 * progressFactor + 40, 0)
+      (East, North) -> turn (0.5, Clockwise) |> add (40, -40)
+      (East, South) -> turn (1.0, Counterclockwise) |> add (40, 40)
+      (West, East) -> (80 * progressFactor - 40, 0)
+      (West, South) -> turn (0.0, Clockwise) |> add (-40, 40)
+      (West, North) -> turn (0.5, Counterclockwise) |> add (-40, -40)
       _ -> (0, 0)
 
 calculateOffsets : Train.Model -> Float -> (Css.Mixin, Css.Mixin)
