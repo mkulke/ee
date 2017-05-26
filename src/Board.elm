@@ -1,9 +1,8 @@
 module Board exposing (nextIndex, getNewDirections, tilesGenerator, calculateOffsets, calculateRotation, tilesOk)
 
-import Tile exposing (Direction(..))
+import Tile exposing (Direction(North, East, South, West))
 import Train
-import Maybe
-import Random exposing (generate)
+import Random exposing (Generator)
 import Css exposing (px, left, top, deg, transform, rotate)
 
 
@@ -37,14 +36,14 @@ tilesOk tiles =
                         True
     in
         case tiles of
-            firstTile :: otherTiles ->
+            firstTile :: _ ->
                 pointsNorthOrWest firstTile
 
             [] ->
                 False
 
 
-tilesGenerator : Random.Generator (List Tile.Model)
+tilesGenerator : Generator (List Tile.Model)
 tilesGenerator =
     Random.list (boardWidth * boardHeight) Tile.generator
 
@@ -75,24 +74,6 @@ getNewDirections train tile =
             Just ( otherEnd, oneEnd )
         else
             Nothing
-
-
-calculateXTurn : Float -> Float -> Float
-calculateXTurn delta factor =
-    let
-        angle =
-            turns (factor / 4)
-    in
-        delta * cos angle
-
-
-calculateYTurn : Float -> Float -> Float
-calculateYTurn delta factor =
-    let
-        angle =
-            turns (factor / 4)
-    in
-        delta * sin angle
 
 
 calculateRotation : Train.Model -> Float -> Css.Mixin

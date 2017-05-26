@@ -1,9 +1,9 @@
-module Train exposing (Model, Progress(..), init, view, updateProgress)
+module Train exposing (Model, Progress(ProgressingSince, Done), init, view, updateProgress)
 
 import Tile exposing (Model, Direction)
 import Html exposing (Html, div)
 import Html.Attributes exposing (class)
-import Css exposing (asPairs, px, opacity, left, top)
+import Css exposing (opacity)
 
 
 -- MODEL
@@ -68,7 +68,7 @@ progressFactor progress =
 
 
 calculateOpacity : Model -> Css.Mixin
-calculateOpacity { progress } =
+calculateOpacity _ =
     let
         -- value = 1 - (progressFactor progress)
         value =
@@ -94,13 +94,13 @@ view calculateOffsets calculateRotation model =
         rotation =
             calculateRotation model factor
 
-        opacity =
+        opacityValue =
             calculateOpacity model
     in
         div
             [ class "train"
             , styles
-                [ opacity
+                [ opacityValue
                 , topOffset
                 , leftOffset
                 , rotation

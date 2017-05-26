@@ -1,13 +1,13 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Tile
 import Train
 import Board
-import Html exposing (Html, text, div)
+import Html exposing (Html, div)
 import Html.Attributes exposing (class)
-import Random exposing (generate)
 import Maybe exposing (withDefault, andThen)
 import List.Extra exposing (getAt, setAt, groupsOf)
+import Random exposing (generate)
 import AnimationFrame
 
 
@@ -33,7 +33,7 @@ type alias Model =
 
 generateTiles : Cmd Msg
 generateTiles =
-    Random.generate NewRandom Board.tilesGenerator
+    generate NewRandom Board.tilesGenerator
 
 
 init : ( Model, Cmd Msg )
@@ -50,7 +50,7 @@ type alias Index =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     AnimationFrame.diffs Tick
 
 
