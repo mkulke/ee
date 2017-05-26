@@ -1,9 +1,9 @@
-module Tile exposing (Model, Msg, Direction(..), idle, connections, updateTick, init, update, debugView, view, generator, rotateDirection)
+module Tile exposing (Model, Msg, Direction(North, East, South, West), idle, connections, updateTick, init, update, debugView, view, generator, rotateDirection)
 
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
-import Css exposing (asPairs, transform, deg, rotate)
+import Css exposing (transform, deg, rotate)
 import Random exposing (Generator)
 import String exposing (join)
 
@@ -110,12 +110,12 @@ connections { kind, orientation } =
         noOfRotations =
             rotationFactor orientation
 
-        rotate =
+        rotate90 =
             \tuple no ->
                 if no == 0 then
                     tuple
                 else
-                    rotate (mapTuple rotateDirection tuple) (no - 1)
+                    rotate90 (mapTuple rotateDirection tuple) (no - 1)
 
         unRotatedConnections =
             case kind of
@@ -125,7 +125,7 @@ connections { kind, orientation } =
                 Turn ->
                     ( North, West )
     in
-        rotate unRotatedConnections noOfRotations
+        rotate90 unRotatedConnections noOfRotations
 
 
 rotationFactor : Orientation -> Int
