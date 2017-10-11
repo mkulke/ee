@@ -174,7 +174,8 @@ view : Model -> Html Msg
 view model =
     let
         tileView =
-            \index tile -> Html.map (Tile index) (Tile.debugView tile index)
+            -- \index tile -> Html.map (Tile index) (Tile.debugView tile index)
+            \index tile -> Html.map (Tile index) (Tile.view tile)
 
         trainView =
             \train -> Train.view Board.calculateOffsets Board.calculateRotation train
