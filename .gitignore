@@ -1,5 +1,5 @@
 elm-stuff
 node_modules
-public/main.js
+dist
 *.swp
 .DS_Store

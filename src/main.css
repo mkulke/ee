@@ -20,13 +20,13 @@ body {
   z-index: 1;
   /* background-color: green; */
   /* border-radius: 50%; */
-  background-image: url("/img/train.png");
+  background-image: url('../images/train.png');
 }
 
 .tile.turn {
-  background-image: url("/img/turn.png");
+  background-image: url('../images/turn.png');
 }
 
 .tile.straight {
-  background-image: url("/img/straight.png");
+  background-image: url('../images/straight.png');
 }
