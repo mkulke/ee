@@ -2,12 +2,19 @@
   "name": "ee",
   "version": "0.0.1",
   "description": "",
-  "main": "watch.js",
+  "main": "index.js",
   "author": "magnus kulke",
   "license": "ISC",
-  "devDependencies": {
-    "browser-sync": "^2.11.0",
-    "chokidar": "^1.4.2",
-    "connect-history-api-fallback": "^1.1.0"
+  "dependencies": {
+    "css-loader": "^0.28.8",
+    "elm-webpack-loader": "^4.4.0",
+    "file-loader": "^1.1.6",
+    "style-loader": "^0.19.1",
+    "webpack": "^3.10.0",
+    "webpack-dev-server": "^2.11.0"
+  },
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack-dev-server --port 3000"
   }
 }
