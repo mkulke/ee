@@ -1,4 +1,4 @@
-module Tile exposing (Model, Msg, Direction(North, East, South, West), idle, connections, updateTick, init, update, debugView, view, generator, rotateDirection)
+module Tile exposing (Model, Msg, Direction(North, East, South, West), Occupancy(Vacant, Blocked), idle, connections, updateTick, init, update, debugView, view, generator, rotateDirection, getOccupancy, setOccupancy)
 
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class)
@@ -9,6 +9,11 @@ import String exposing (join)
 
 
 -- MODEL
+
+
+type Occupancy
+    = Vacant
+    | Blocked
 
 
 type Direction
@@ -31,6 +36,7 @@ type alias Model =
     { kind : Kind
     , orientation : Orientation
     , transitioning : Transition
+    , occupancy : Occupancy
     }
 
 
@@ -70,7 +76,17 @@ init ( kindNo, orientationNo ) =
                 _ ->
                     West
     in
-        Model kind orientation NotTransitioning
+        Model kind orientation NotTransitioning Vacant
+
+
+getOccupancy : Model -> Occupancy
+getOccupancy model =
+    model.occupancy
+
+
+setOccupancy : Occupancy -> Model -> Model
+setOccupancy occupancy model =
+    { model | occupancy = occupancy }
 
 
 updateTick : Float -> Model -> Model
@@ -176,7 +192,11 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         Rotate ->
-            if model.transitioning == NotTransitioning then
+            -- let
+            --     _ =
+            --         Debug.log "mgns" model
+            -- in
+            if model.transitioning == NotTransitioning && model.occupancy == Vacant then
                 { model
                     | transitioning = TransitioningSince 0
                     , orientation = rotateDirection model.orientation

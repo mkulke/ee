@@ -136,11 +136,38 @@ updateTrainTick diff model train =
 updateTick : Float -> Model -> Model
 updateTick diff model =
     let
+        currentIndex =
+            Maybe.map (\train -> train.index) model.train
+
+        nextIndex =
+            model.train |> Maybe.andThen Board.nextIndex
+
+        updateOccupancy =
+            \referenceIndex index tile ->
+                case referenceIndex of
+                    Just i ->
+                        if index == i then
+                            Tile.setOccupancy Tile.Blocked tile
+                        else
+                            Tile.setOccupancy Tile.Vacant tile
+
+                    Nothing ->
+                        tile
+
+        updatedTiles =
+            model.tiles
+                |> List.indexedMap (updateOccupancy currentIndex)
+                |> List.indexedMap (updateOccupancy nextIndex)
+                |> List.map updateTile
+
         updateTrain =
             updateTrainTick diff model
+
+        updateTile =
+            Tile.updateTick diff
     in
         { model
-            | tiles = List.map (Tile.updateTick diff) model.tiles
+            | tiles = updatedTiles
             , train = Maybe.map updateTrain model.train
         }
 
