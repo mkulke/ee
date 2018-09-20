@@ -1,9 +1,10 @@
-module Train exposing (Model, Progress(ProgressingSince, Done), init, view, updateProgress)
+module Train exposing (Model, Progress(..), init, updateProgress, view)
 
-import Tile exposing (Model, Direction)
-import Html exposing (Html, div)
-import Html.Attributes exposing (class)
 import Css exposing (opacity)
+import Html.Styled exposing (Html, div)
+import Html.Styled.Attributes exposing (class, css)
+import Tile exposing (Direction, Model)
+
 
 
 -- MODEL
@@ -28,7 +29,7 @@ init index tile =
         ( from, to ) =
             Tile.connections tile
     in
-        Model index from to (ProgressingSince 0)
+    Model index from to (ProgressingSince 0)
 
 
 updateProgress : Float -> Model -> Model
@@ -42,10 +43,11 @@ updateProgress diff model =
                 ProgressingSince time ->
                     if time < progressTime then
                         ProgressingSince (time + diff)
+
                     else
                         Done
     in
-        { model | progress = progress }
+    { model | progress = progress }
 
 
 progressTime : Float
@@ -67,22 +69,17 @@ progressFactor progress =
 -- VIEW
 
 
-calculateOpacity : Model -> Css.Mixin
+calculateOpacity : Model -> Css.Style
 calculateOpacity _ =
     let
         -- value = 1 - (progressFactor progress)
         value =
             1
     in
-        opacity (Css.num value)
+    opacity (Css.num value)
 
 
-styles : List Css.Mixin -> Html.Attribute msg
-styles =
-    Css.asPairs >> Html.Attributes.style
-
-
-view : (Model -> Float -> ( Css.Mixin, Css.Mixin )) -> (Model -> Float -> Css.Mixin) -> Model -> Html msg
+view : (Model -> Float -> ( Css.Style, Css.Style )) -> (Model -> Float -> Css.Style) -> Model -> Html msg
 view calculateOffsets calculateRotation model =
     let
         factor =
@@ -97,13 +94,13 @@ view calculateOffsets calculateRotation model =
         opacityValue =
             calculateOpacity model
     in
-        div
-            [ class "train"
-            , styles
-                [ opacityValue
-                , topOffset
-                , leftOffset
-                , rotation
-                ]
+    div
+        [ class "train"
+        , css
+            [ opacityValue
+            , topOffset
+            , leftOffset
+            , rotation
             ]
-            []
+        ]
+        []
