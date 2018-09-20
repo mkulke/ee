@@ -1,22 +1,23 @@
 module Main exposing (main)
 
+import Board
+import Browser exposing (..)
+import Browser.Events exposing (onAnimationFrameDelta)
+import Html.Styled exposing (Html, div, toUnstyled)
+import Html.Styled.Attributes exposing (class)
+import List.Extra exposing (getAt, groupsOf, setAt)
+import Maybe exposing (andThen, withDefault)
+import Random exposing (generate)
 import Tile
 import Train
-import Board
-import Html exposing (Html, div)
-import Html.Attributes exposing (class)
-import Maybe exposing (withDefault, andThen)
-import List.Extra exposing (getAt, setAt, groupsOf)
-import Random exposing (generate)
-import AnimationFrame
 
 
-main : Program Never Model Msg
+main : Program Int Model Msg
 main =
-    Html.program
+    Browser.element
         { init = init
         , update = update
-        , view = view
+        , view = view >> toUnstyled
         , subscriptions = subscriptions
         }
 
@@ -36,9 +37,11 @@ generateTiles =
     generate NewRandom Board.tilesGenerator
 
 
-init : ( Model, Cmd Msg )
-init =
-    Model [] Nothing ! [ generateTiles ]
+init : flags -> ( Model, Cmd Msg )
+init flags =
+    ( Model [] Nothing
+    , generateTiles
+    )
 
 
 type alias Index =
@@ -51,7 +54,7 @@ type alias Index =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    AnimationFrame.diffs Tick
+    onAnimationFrameDelta Tick
 
 
 
@@ -70,13 +73,15 @@ updateTiles msg index tiles =
         tileUpdate =
             Tile.update msg
 
-        getTile =
+        tile =
             getAt index tiles
-
-        setTile =
-            \tile -> setAt index (tileUpdate tile) tiles
     in
-        getTile |> andThen setTile |> withDefault tiles
+    case tile of
+        Just t ->
+            setAt index (tileUpdate t) tiles
+
+        Nothing ->
+            tiles
 
 
 initTrain : List Tile.Model -> Int -> Maybe Train.Model
@@ -85,12 +90,12 @@ initTrain tiles index =
         tilesTail =
             List.drop index tiles
     in
-        case tilesTail of
-            firstTile :: _ ->
-                Just (Train.init index firstTile)
+    case tilesTail of
+        firstTile :: _ ->
+            Just (Train.init index firstTile)
 
-            [] ->
-                Nothing
+        [] ->
+            Nothing
 
 
 moveTrain : List Tile.Model -> Train.Model -> Maybe Train.Model
@@ -100,6 +105,7 @@ moveTrain tiles train =
             \tile ->
                 if Tile.idle tile then
                     Just tile
+
                 else
                     Nothing
 
@@ -113,9 +119,9 @@ moveTrain tiles train =
                     |> Maybe.andThen (Board.getNewDirections newTrain)
                     |> Maybe.map (\( from, to ) -> { newTrain | from = from, to = to })
     in
-        Board.nextIndex train
-            |> Maybe.map setIndex
-            |> Maybe.andThen setDirection
+    Board.nextIndex train
+        |> Maybe.map setIndex
+        |> Maybe.andThen setDirection
 
 
 updateTrainTick : Float -> Model -> Train.Model -> Train.Model
@@ -124,13 +130,13 @@ updateTrainTick diff model train =
         progressedTrain =
             Train.updateProgress diff train
     in
-        case progressedTrain.progress of
-            Train.ProgressingSince _ ->
-                progressedTrain
+    case progressedTrain.progress of
+        Train.ProgressingSince _ ->
+            progressedTrain
 
-            Train.Done ->
-                moveTrain model.tiles progressedTrain
-                    |> withDefault train
+        Train.Done ->
+            moveTrain model.tiles progressedTrain
+                |> withDefault train
 
 
 updateTick : Float -> Model -> Model
@@ -148,6 +154,7 @@ updateTick diff model =
                     Just i ->
                         if index == i then
                             Tile.setOccupancy Tile.Blocked tile
+
                         else
                             Tile.setOccupancy Tile.Vacant tile
 
@@ -166,10 +173,10 @@ updateTick diff model =
         updateTile =
             Tile.updateTick diff
     in
-        { model
-            | tiles = updatedTiles
-            , train = Maybe.map updateTrain model.train
-        }
+    { model
+        | tiles = updatedTiles
+        , train = Maybe.map updateTrain model.train
+    }
 
 
 populateBoard : Model -> List Tile.Model -> Model
@@ -181,16 +188,25 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tile index tileMsg ->
-            { model | tiles = updateTiles tileMsg index model.tiles } ! []
+            ( { model | tiles = updateTiles tileMsg index model.tiles }
+            , Cmd.none
+            )
 
         Tick diff ->
-            updateTick diff model ! []
+            ( updateTick diff model
+            , Cmd.none
+            )
 
         NewRandom tiles ->
             if Board.tilesOk tiles then
-                populateBoard model tiles ! []
+                ( populateBoard model tiles
+                , Cmd.none
+                )
+
             else
-                model ! [ generateTiles ]
+                ( model
+                , generateTiles
+                )
 
 
 
@@ -202,7 +218,7 @@ view model =
     let
         tileView =
             -- \index tile -> Html.map (Tile index) (Tile.debugView tile index)
-            \index tile -> Html.map (Tile index) (Tile.view tile)
+            \index tile -> Html.Styled.map (Tile index) (Tile.view tile)
 
         trainView =
             \train -> Train.view Board.calculateOffsets Board.calculateRotation train
@@ -221,4 +237,4 @@ view model =
                 Just train ->
                     trainView train :: tileRows
     in
-        div [ class "grid" ] divs
+    div [ class "grid" ] divs

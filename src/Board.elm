@@ -1,9 +1,9 @@
-module Board exposing (nextIndex, getNewDirections, tilesGenerator, calculateOffsets, calculateRotation, tilesOk)
+module Board exposing (calculateOffsets, calculateRotation, getNewDirections, nextIndex, tilesGenerator, tilesOk)
 
-import Tile exposing (Direction(North, East, South, West))
-import Train
+import Css exposing (deg, left, px, rotate, top, transform)
 import Random exposing (Generator)
-import Css exposing (px, left, top, deg, transform, rotate)
+import Tile exposing (Direction(..))
+import Train
 
 
 boardWidth : Int
@@ -35,12 +35,12 @@ tilesOk tiles =
                     _ ->
                         True
     in
-        case tiles of
-            firstTile :: _ ->
-                pointsNorthOrWest firstTile
+    case tiles of
+        firstTile :: _ ->
+            pointsNorthOrWest firstTile
 
-            [] ->
-                False
+        [] ->
+            False
 
 
 tilesGenerator : Generator (List Tile.Model)
@@ -50,7 +50,7 @@ tilesGenerator =
 
 indexToCoordinates : Int -> ( Int, Int )
 indexToCoordinates index =
-    ( index % boardWidth, index // boardHeight )
+    ( modBy boardWidth index, index // boardHeight )
 
 
 getNewDirections : Train.Model -> Tile.Model -> Maybe ( Tile.Direction, Tile.Direction )
@@ -68,15 +68,17 @@ getNewDirections train tile =
         ( oneEnd, otherEnd ) =
             Tile.connections tile
     in
-        if trainConnection == oneEnd then
-            Just ( oneEnd, otherEnd )
-        else if trainConnection == otherEnd then
-            Just ( otherEnd, oneEnd )
-        else
-            Nothing
+    if trainConnection == oneEnd then
+        Just ( oneEnd, otherEnd )
+
+    else if trainConnection == otherEnd then
+        Just ( otherEnd, oneEnd )
+
+    else
+        Nothing
 
 
-calculateRotation : Train.Model -> Float -> Css.Mixin
+calculateRotation : Train.Model -> Float -> Css.Style
 calculateRotation model progressFactor =
     let
         degree =
@@ -120,7 +122,7 @@ calculateRotation model progressFactor =
                 _ ->
                     0
     in
-        transform (rotate (deg degree))
+    degree |> toFloat |> deg |> rotate |> transform
 
 
 type Direction
@@ -147,53 +149,53 @@ calculateDelta movement progressFactor =
                         turns (offset - progress + angleOffset)
 
         turn =
-            angle >> \angle_ -> ( 40 * cos angle_, 40 * sin angle_ )
+            angle >> (\angle_ -> ( 40 * cos angle_, 40 * sin angle_ ))
 
         add =
             \( x1, y1 ) ( x2, y2 ) -> ( x1 + x2, y1 + y2 )
     in
-        case movement of
-            ( North, South ) ->
-                ( 0, 80 * progressFactor - 40 )
+    case movement of
+        ( North, South ) ->
+            ( 0, 80 * progressFactor - 40 )
 
-            ( North, East ) ->
-                turn ( 0.75, Counterclockwise ) |> add ( 40, -40 )
+        ( North, East ) ->
+            turn ( 0.75, Counterclockwise ) |> add ( 40, -40 )
 
-            ( North, West ) ->
-                turn ( 0.25, Clockwise ) |> add ( -40, -40 )
+        ( North, West ) ->
+            turn ( 0.25, Clockwise ) |> add ( -40, -40 )
 
-            ( South, North ) ->
-                ( 0, -80 * progressFactor + 40 )
+        ( South, North ) ->
+            ( 0, -80 * progressFactor + 40 )
 
-            ( South, East ) ->
-                turn ( 0.75, Clockwise ) |> add ( 40, 40 )
+        ( South, East ) ->
+            turn ( 0.75, Clockwise ) |> add ( 40, 40 )
 
-            ( South, West ) ->
-                turn ( 0.25, Counterclockwise ) |> add ( -40, 40 )
+        ( South, West ) ->
+            turn ( 0.25, Counterclockwise ) |> add ( -40, 40 )
 
-            ( East, West ) ->
-                ( -80 * progressFactor + 40, 0 )
+        ( East, West ) ->
+            ( -80 * progressFactor + 40, 0 )
 
-            ( East, North ) ->
-                turn ( 0.5, Clockwise ) |> add ( 40, -40 )
+        ( East, North ) ->
+            turn ( 0.5, Clockwise ) |> add ( 40, -40 )
 
-            ( East, South ) ->
-                turn ( 1.0, Counterclockwise ) |> add ( 40, 40 )
+        ( East, South ) ->
+            turn ( 1.0, Counterclockwise ) |> add ( 40, 40 )
 
-            ( West, East ) ->
-                ( 80 * progressFactor - 40, 0 )
+        ( West, East ) ->
+            ( 80 * progressFactor - 40, 0 )
 
-            ( West, South ) ->
-                turn ( 0.0, Clockwise ) |> add ( -40, 40 )
+        ( West, South ) ->
+            turn ( 0.0, Clockwise ) |> add ( -40, 40 )
 
-            ( West, North ) ->
-                turn ( 0.5, Counterclockwise ) |> add ( -40, -40 )
+        ( West, North ) ->
+            turn ( 0.5, Counterclockwise ) |> add ( -40, -40 )
 
-            _ ->
-                ( 0, 0 )
+        _ ->
+            ( 0, 0 )
 
 
-calculateOffsets : Train.Model -> Float -> ( Css.Mixin, Css.Mixin )
+calculateOffsets : Train.Model -> Float -> ( Css.Style, Css.Style )
 calculateOffsets train progressFactor =
     let
         { index, from, to } =
@@ -217,7 +219,7 @@ calculateOffsets train progressFactor =
         y =
             yOffset + yDelta
     in
-        ( top (px y), left (px x) )
+    ( top (px y), left (px x) )
 
 
 nextIndex : Train.Model -> Maybe Int
@@ -229,27 +231,31 @@ nextIndex train =
         index =
             train.index
     in
-        case train.to of
-            Tile.North ->
-                if index - boardWidth >= 0 then
-                    Just (index - boardWidth)
-                else
-                    Nothing
+    case train.to of
+        Tile.North ->
+            if index - boardWidth >= 0 then
+                Just (index - boardWidth)
 
-            Tile.East ->
-                if ((index + 1) % boardWidth) > 0 then
-                    Just (index + 1)
-                else
-                    Nothing
+            else
+                Nothing
 
-            Tile.South ->
-                if index + boardWidth < max then
-                    Just (index + boardWidth)
-                else
-                    Nothing
+        Tile.East ->
+            if modBy boardWidth (index + 1) > 0 then
+                Just (index + 1)
 
-            Tile.West ->
-                if (index % boardWidth) > 0 then
-                    Just (index - 1)
-                else
-                    Nothing
+            else
+                Nothing
+
+        Tile.South ->
+            if index + boardWidth < max then
+                Just (index + boardWidth)
+
+            else
+                Nothing
+
+        Tile.West ->
+            if modBy boardWidth index > 0 then
+                Just (index - 1)
+
+            else
+                Nothing

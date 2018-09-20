@@ -1,11 +1,12 @@
-module Tile exposing (Model, Msg, Direction(North, East, South, West), Occupancy(Vacant, Blocked), idle, connections, updateTick, init, update, debugView, view, generator, rotateDirection, getOccupancy, setOccupancy)
+module Tile exposing (Direction(..), Model, Msg, Occupancy(..), connections, debugView, generator, getOccupancy, idle, init, rotateDirection, setOccupancy, update, updateTick, view)
 
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (class)
-import Html.Events exposing (onClick)
-import Css exposing (transform, deg, rotate)
+import Css exposing (deg, rotate, transform)
+import Html.Styled exposing (Html, div, text)
+import Html.Styled.Attributes exposing (class, css)
+import Html.Styled.Events exposing (onClick)
 import Random exposing (Generator)
 import String exposing (join)
+
 
 
 -- MODEL
@@ -76,7 +77,7 @@ init ( kindNo, orientationNo ) =
                 _ ->
                     West
     in
-        Model kind orientation NotTransitioning Vacant
+    Model kind orientation NotTransitioning Vacant
 
 
 getOccupancy : Model -> Occupancy
@@ -100,6 +101,7 @@ updateTick diff model =
                 | transitioning =
                     if time < transitionTime then
                         TransitioningSince (time + diff)
+
                     else
                         NotTransitioning
             }
@@ -126,11 +128,12 @@ connections { kind, orientation } =
         noOfRotations =
             rotationFactor orientation
 
-        rotate90 =
-            \tuple no ->
-                if no == 0 then
+        rotate90 tuple no =
+            case no of
+                0 ->
                     tuple
-                else
+
+                _ ->
                     rotate90 (mapTuple rotateDirection tuple) (no - 1)
 
         unRotatedConnections =
@@ -141,7 +144,17 @@ connections { kind, orientation } =
                 Turn ->
                     ( North, West )
     in
-        rotate90 unRotatedConnections noOfRotations
+    rotate90 unRotatedConnections noOfRotations
+
+
+kindToString : Kind -> String
+kindToString value =
+    case value of
+        Turn ->
+            "turn"
+
+        Straight ->
+            "straight"
 
 
 rotationFactor : Orientation -> Int
@@ -201,20 +214,12 @@ update msg model =
                     | transitioning = TransitioningSince 0
                     , orientation = rotateDirection model.orientation
                 }
+
             else
                 model
 
 
-
--- VIEW
-
-
-styles : List Css.Mixin -> Html.Attribute msg
-styles =
-    Css.asPairs >> Html.Attributes.style
-
-
-rotation : Model -> Css.Mixin
+rotation : Model -> Css.Style
 rotation { orientation, transitioning } =
     let
         factor =
@@ -240,36 +245,29 @@ rotation { orientation, transitioning } =
                 TransitioningSince time ->
                     toFraction time |> deg
     in
-        transform (rotate degree)
+    transform (rotate degree)
 
 
 toCSSClasses : Model -> List String
-toCSSClasses { kind, orientation } =
-    let
-        kindClass =
-            kind |> toString |> String.toLower
-
-        orientationClass =
-            orientation |> toString |> String.toLower
-    in
-        [ kindClass, orientationClass ]
+toCSSClasses { kind } =
+    [ kindToString kind ]
 
 
 debugView : Model -> Int -> Html Msg
 debugView model index =
     div
         [ class (join " " ("tile" :: toCSSClasses model))
-        , styles [ rotation model ]
+        , css [ rotation model ]
         , onClick Rotate
         ]
-        [ text (toString index) ]
+        [ text (String.fromInt index) ]
 
 
 view : Model -> Html Msg
 view model =
     div
         [ class (join " " ("tile" :: toCSSClasses model))
-        , styles [ rotation model ]
+        , css [ rotation model ]
         , onClick Rotate
         ]
         []

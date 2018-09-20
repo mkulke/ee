@@ -24,15 +24,13 @@ module.exports = {
       {
         test: /\.elm$/,
         exclude: [/elm-stuff/, /node_modules/],
-        loader: 'elm-webpack-loader?verbose=true&warn=true',
+        loader: 'elm-webpack-loader?verbose=true',
       },
       {
         test: /images\/.*\.png$/,
         loader: 'file-loader',
       },
     ],
-
-    noParse: /\.elm$/,
   },
 
   devServer: {

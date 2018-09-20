@@ -3,6 +3,5 @@
 require('./main.css');
 require('./index.html');
 
-var Elm = require('./Main.elm');
-var mountNode = document.getElementById('main');
-var app = Elm.Main.embed(mountNode);
+const { Elm } = require('./Main.elm');
+Elm.Main.init({ node: document.getElementById('main'), flags: 1 });
