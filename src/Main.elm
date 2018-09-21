@@ -175,7 +175,8 @@ updateTick diff model =
     in
     { model
         | tiles = updatedTiles
-        , train = Maybe.map updateTrain model.train
+
+        -- , train = Maybe.map updateTrain model.train
     }
 
 
@@ -227,7 +228,7 @@ view model =
             List.indexedMap tileView model.tiles
 
         tileRows =
-            groupsOf 6 tilesView |> List.map (div [])
+            groupsOf Board.width tilesView |> List.map (div [])
 
         divs =
             case model.train of

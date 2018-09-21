@@ -29,7 +29,8 @@ init index tile =
         ( from, to ) =
             Tile.connections tile
     in
-    Model index from to (ProgressingSince 0)
+    -- Model index from to (ProgressingSince 0)
+    Model index from to Done
 
 
 updateProgress : Float -> Model -> Model
@@ -83,7 +84,7 @@ view : (Model -> Float -> ( Css.Style, Css.Style )) -> (Model -> Float -> Css.St
 view calculateOffsets calculateRotation model =
     let
         factor =
-            progressFactor model.progress
+            progressFactor model.progress + 0.5
 
         ( topOffset, leftOffset ) =
             calculateOffsets model factor

@@ -1,4 +1,4 @@
-module Board exposing (calculateOffsets, calculateRotation, getNewDirections, nextIndex, tilesGenerator, tilesOk)
+module Board exposing (calculateOffsets, calculateRotation, getNewDirections, nextIndex, tilesGenerator, tilesOk, width)
 
 import Css exposing (deg, left, px, rotate, top, transform)
 import Random exposing (Generator)
@@ -6,13 +6,13 @@ import Tile exposing (Direction(..))
 import Train
 
 
-boardWidth : Int
-boardWidth =
+width : Int
+width =
     6
 
 
-boardHeight : Int
-boardHeight =
+height : Int
+height =
     6
 
 
@@ -45,12 +45,12 @@ tilesOk tiles =
 
 tilesGenerator : Generator (List Tile.Model)
 tilesGenerator =
-    Random.list (boardWidth * boardHeight) Tile.generator
+    Random.list (width * height) Tile.generator
 
 
 indexToCoordinates : Int -> ( Int, Int )
 indexToCoordinates index =
-    ( modBy boardWidth index, index // boardHeight )
+    ( modBy width index, index // height )
 
 
 getNewDirections : Train.Model -> Tile.Model -> Maybe ( Tile.Direction, Tile.Direction )
@@ -226,36 +226,44 @@ nextIndex : Train.Model -> Maybe Int
 nextIndex train =
     let
         max =
-            boardWidth * boardHeight
+            width * height
 
         index =
             train.index
+
+        -- _ =
+        --     Debug.log "train" train
     in
-    case train.to of
-        Tile.North ->
-            if index - boardWidth >= 0 then
-                Just (index - boardWidth)
+    case train.progress of
+        Train.Done ->
+            Nothing
 
-            else
-                Nothing
+        _ ->
+            case train.to of
+                Tile.North ->
+                    if index - width >= 0 then
+                        Just (index - width)
 
-        Tile.East ->
-            if modBy boardWidth (index + 1) > 0 then
-                Just (index + 1)
+                    else
+                        Nothing
 
-            else
-                Nothing
+                Tile.East ->
+                    if modBy width (index + 1) > 0 then
+                        Just (index + 1)
 
-        Tile.South ->
-            if index + boardWidth < max then
-                Just (index + boardWidth)
+                    else
+                        Nothing
 
-            else
-                Nothing
+                Tile.South ->
+                    if index + width < max then
+                        Just (index + width)
 
-        Tile.West ->
-            if modBy boardWidth index > 0 then
-                Just (index - 1)
+                    else
+                        Nothing
 
-            else
-                Nothing
+                Tile.West ->
+                    if modBy width index > 0 then
+                        Just (index - 1)
+
+                    else
+                        Nothing

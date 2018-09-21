@@ -205,10 +205,10 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         Rotate ->
-            -- let
-            --     _ =
-            --         Debug.log "mgns" model
-            -- in
+            let
+                _ =
+                    Debug.log "tile" model
+            in
             if model.transitioning == NotTransitioning && model.occupancy == Vacant then
                 { model
                     | transitioning = TransitioningSince 0
